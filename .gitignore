@@ -1,0 +1,22 @@
+# Godot
+.godot/
+.import/
+export_presets.cfg.bak
+*.translation
+/build/
+/exports/
+# Python
+__pycache__/
+*.pyc
+.venv/
+# Tools / local
+.worktrees/
+*.log
+.env
+meshy.txt
+*.blend1
+/tools/capture/out/
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
