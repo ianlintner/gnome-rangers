@@ -1,0 +1,136 @@
+[gd_resource type="Theme" load_steps=14 format=3]
+
+[ext_resource type="FontFile" path="res://ui/fonts/AlegreyaSans-Regular.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://ui/fonts/Cinzel-Variable.ttf" id="2_title"]
+
+[sub_resource type="StyleBoxFlat" id="panel"]
+bg_color = Color(0.0784, 0.098, 0.0667, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2275, 0.1804, 0.1294, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="btn_normal"]
+bg_color = Color(0.0784, 0.098, 0.0667, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2275, 0.1804, 0.1294, 1)
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="btn_hover"]
+bg_color = Color(0.1412, 0.1647, 0.1137, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3529, 0.2392, 0.1569, 1)
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="btn_pressed"]
+bg_color = Color(0.2, 0.1294, 0.0824, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3529, 0.2392, 0.1569, 1)
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="btn_disabled"]
+bg_color = Color(0.0784, 0.098, 0.0667, 0.5)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2, 0.1294, 0.0824, 1)
+content_margin_left = 16.0
+content_margin_top = 6.0
+content_margin_right = 16.0
+content_margin_bottom = 6.0
+
+[sub_resource type="StyleBoxFlat" id="focus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.8863, 0.902, 0.8353, 1)
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="bar_bg"]
+bg_color = Color(0.0784, 0.098, 0.0667, 0.7)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3529, 0.2392, 0.1569, 1)
+
+[sub_resource type="StyleBoxFlat" id="bar_fill"]
+bg_color = Color(0.5490, 0.1843, 0.1176, 1)
+
+[sub_resource type="StyleBoxFlat" id="stamina_fill"]
+bg_color = Color(0.7529, 0.5412, 0.1804, 1)
+
+[sub_resource type="StyleBoxFlat" id="mount_fill"]
+bg_color = Color(0.2314, 0.2510, 0.2667, 1)
+
+[sub_resource type="StyleBoxFlat" id="ghost_fill"]
+bg_color = Color(0.7843, 0.8078, 0.7216, 1)
+
+[resource]
+default_font = ExtResource("1_body")
+default_font_size = 20
+Button/colors/font_color = Color(0.7843, 0.8078, 0.7216, 1)
+Button/colors/font_hover_color = Color(0.8863, 0.902, 0.8353, 1)
+Button/colors/font_focus_color = Color(0.8863, 0.902, 0.8353, 1)
+Button/colors/font_pressed_color = Color(0.8863, 0.902, 0.8353, 1)
+Button/colors/font_disabled_color = Color(0.4, 0.42, 0.37, 1)
+Button/styles/normal = SubResource("btn_normal")
+Button/styles/hover = SubResource("btn_hover")
+Button/styles/pressed = SubResource("btn_pressed")
+Button/styles/disabled = SubResource("btn_disabled")
+Button/styles/focus = SubResource("focus")
+Label/colors/font_color = Color(0.7843, 0.8078, 0.7216, 1)
+Label/colors/font_shadow_color = Color(0, 0, 0, 0.6)
+Label/constants/shadow_offset_x = 1
+Label/constants/shadow_offset_y = 1
+HeaderLabel/base_type = &"Label"
+HeaderLabel/colors/font_color = Color(0.8863, 0.902, 0.8353, 1)
+HeaderLabel/font_sizes/font_size = 36
+HeaderLabel/fonts/font = ExtResource("2_title")
+BossNameLabel/base_type = &"Label"
+BossNameLabel/colors/font_color = Color(0.7529, 0.5412, 0.1804, 1)
+BossNameLabel/font_sizes/font_size = 22
+BossNameLabel/fonts/font = ExtResource("2_title")
+Panel/styles/panel = SubResource("panel")
+PanelContainer/styles/panel = SubResource("panel")
+ProgressBar/styles/background = SubResource("bar_bg")
+ProgressBar/styles/fill = SubResource("bar_fill")
+StaminaBar/base_type = &"ProgressBar"
+StaminaBar/styles/fill = SubResource("stamina_fill")
+MountBar/base_type = &"ProgressBar"
+MountBar/styles/fill = SubResource("mount_fill")
+GhostBar/base_type = &"ProgressBar"
+GhostBar/styles/fill = SubResource("ghost_fill")

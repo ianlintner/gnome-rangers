@@ -64,7 +64,7 @@ godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
 gdlint . && gdformat --check .
 ```
 
-Card 1 finalizes the exact commands, and CI runs the same set. Visual changes also attach
+CI (`.github/workflows/ci.yml`) runs the same set. Visual changes also attach
 captures produced by `tools/capture/`.
 
 ## Assets and secrets

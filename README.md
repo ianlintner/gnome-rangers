@@ -13,7 +13,9 @@ mounted with a bow, and pounce.
 
 ## Status
 
-**Pre-alpha: planning only.** There is no playable build yet. The MVP vertical slice is one boss
+**Pre-alpha: project scaffold only.** There is no playable game yet. What exists: the Godot
+project, CI, test and lint tooling, the shared event bus / state machine plumbing, the art
+palette and UI theme, and a look-dev sandbox scene (`levels/sandbox`). The MVP vertical slice is one boss
 fight (Grukk the Ironjaw, an orc brute about four times your height) in a single forest arena.
 [`PLAN.md`](PLAN.md) has the full plan, art direction and work breakdown, and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) has the code conventions.
@@ -25,7 +27,28 @@ fight (Grukk the Ironjaw, an orc brute about four times your height) in a single
 - 3D assets generated with [Meshy](https://www.meshy.ai/), with Blender (headless) for cleanup and
   quadruped rigging, plus CC0 assets from Quaternius, Kenney, Poly Haven and ambientCG
 
-Build, run and test instructions arrive with the scaffold (card 1).
+## Develop
+
+```sh
+tools/get_godot.sh                                   # install pinned Godot to ~/.local/bin/godot
+pip install -r requirements-dev.txt                  # gdlint + gdformat (gdtoolkit 4.x)
+
+godot --headless --import --path .                   # import assets (first run / after asset changes)
+godot --path .                                       # run the project (opens the sandbox)
+godot --headless --quit --path .                     # parse check
+
+godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit   # tests (GUT)
+gdlint . && gdformat --check .                       # lint and format check (addons/ excluded)
+gdformat .                                           # apply formatting
+
+tools/capture/capture.sh levels/sandbox/sandbox.tscn /tmp/sandbox.png [--camera <NodePath>] [--frames N]
+```
+
+**Captures** need a real Vulkan device, so they cannot use `--headless`. `capture.sh` uses
+`xvfb-run` when installed (this is what CI does, with Mesa lavapipe: `apt install xvfb
+mesa-vulkan-drivers`). Without Xvfb it falls back to the live Wayland/X session
+(`WAYLAND_DISPLAY`/`DISPLAY`), which is the path on a desktop dev box. `CAPTURE_SIZE=WxH`
+changes the resolution (default 1280x720).
 
 ## Contributing
 
