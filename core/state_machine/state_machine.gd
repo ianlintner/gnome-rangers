@@ -28,7 +28,7 @@ var _states: Dictionary = {}
 
 
 func _ready() -> void:
-	for child in get_children():
+	for child: Node in get_children():
 		if child is State:
 			var state := child as State
 			state.state_machine = self
@@ -87,7 +87,7 @@ func get_current_state() -> State:
 ## Names of every child state, sorted, useful in tests and debug overlays.
 func get_state_names() -> Array[StringName]:
 	var names: Array[StringName] = []
-	for state_name in _states.keys():
+	for state_name: StringName in _states.keys():
 		names.append(state_name as StringName)
-	names.sort()
+	names.sort_custom(func(a: StringName, b: StringName) -> bool: return String(a) < String(b))
 	return names

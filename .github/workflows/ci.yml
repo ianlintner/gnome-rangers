@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache pinned Godot download
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/gnome-rangers/godot
+          key: godot-${{ hashFiles('tools/godot-version.txt') }}
+
+      - name: Install pinned Godot
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          bash tools/get_godot.sh
+          "$HOME/.local/bin/godot" --version
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install gdtoolkit
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint and format check
+        run: |
+          gdlint .
+          gdformat --check .
+
+      - name: Import
+        run: godot --headless --import --path .
+
+      - name: Parse check
+        run: |
+          godot --headless --quit --path . 2>&1 | tee parse.log
+          if grep -E "^(SCRIPT )?ERROR|Parse Error" parse.log; then exit 1; fi
+
+      - name: GUT
+        run: godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit
+
+      - name: Install Xvfb and Mesa lavapipe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb mesa-vulkan-drivers libvulkan1
+
+      - name: Capture sandbox
+        run: tools/capture/capture.sh levels/sandbox/sandbox.tscn out/sandbox.png --frames 60
+
+      - name: Upload capture
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-capture
+          path: out/sandbox.png
