@@ -1,0 +1,7 @@
+# Development tooling, installed alongside the Godot binary.
+#
+#   uv tool install -r requirements-dev.txt    # or: pip install -r requirements-dev.txt
+#
+# gdtoolkit provides gdlint and gdformat. Keep the pin in step with the version
+# CI installs; both are checked in `.github/workflows/ci.yml`.
+gdtoolkit==4.5.0
