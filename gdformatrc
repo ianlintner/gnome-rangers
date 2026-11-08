@@ -1,0 +1,9 @@
+# gdformat configuration (gdtoolkit 4.x). Godot's GDScript style guide uses tab
+# indentation and a 100 column soft limit, which is what gdtoolkit defaults to;
+# the file exists so the settings are explicit and reviewable.
+line-length: 100
+excluded_directories:
+- .git
+- .godot
+- .venv
+- addons

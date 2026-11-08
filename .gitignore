@@ -20,3 +20,4 @@ meshy.txt
 .DS_Store
 .vscode/
 .idea/
+/out/

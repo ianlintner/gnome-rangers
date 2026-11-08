@@ -1,0 +1,120 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Environment" path="res://fx/environment/forest_day.tres" id="1_env"]
+[ext_resource type="Shader" path="res://fx/shaders/rim_light.gdshader" id="2_rim"]
+
+[sub_resource type="ShaderMaterial" id="rim_mat"]
+shader = ExtResource("2_rim")
+shader_parameter/rim_color = Color(0.8863, 0.9020, 0.8353, 1)
+shader_parameter/rim_strength = 0.35
+shader_parameter/rim_power = 2.5
+
+[sub_resource type="StandardMaterial3D" id="cat_mat"]
+albedo_color = Color(0.0941, 0.102, 0.1059, 1)
+roughness = 0.7
+next_pass = SubResource("rim_mat")
+
+[sub_resource type="StandardMaterial3D" id="ground_mat"]
+albedo_color = Color(0.3608, 0.2627, 0.1569, 1)
+roughness = 0.95
+
+[sub_resource type="CapsuleMesh" id="capsule"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="PlaneMesh" id="ground_mesh"]
+size = Vector2(60, 60)
+
+[sub_resource type="BoxMesh" id="canopy_slab"]
+size = Vector3(3, 0.3, 3)
+
+[sub_resource type="BoxShape3D" id="ground_shape"]
+size = Vector3(60, 0.2, 60)
+
+[sub_resource type="StandardMaterial3D" id="canopy_mat"]
+albedo_color = Color(0.2196, 0.302, 0.149, 1)
+
+[node name="Sandbox" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.926, -0.284, 0.25, 0, 0.66, 0.75, -0.379, 0.694, -0.61, 0, 12, 0)
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 2.5
+light_volumetric_fog_energy = 6.0
+shadow_enabled = true
+directional_shadow_max_distance = 40.0
+
+[node name="Ground" type="StaticBody3D" parent="."]
+collision_mask = 0
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("ground_mesh")
+surface_material_override/0 = SubResource("ground_mat")
+
+[node name="Shape" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("ground_shape")
+
+[node name="Canopy" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 0)
+
+[node name="Slab1" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -2)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Slab2" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, -3)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Slab3" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, -3)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Slab4" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 1)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Slab5" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 1)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Slab6" type="MeshInstance3D" parent="Canopy"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
+mesh = SubResource("canopy_slab")
+surface_material_override/0 = SubResource("canopy_mat")
+cast_shadow = 3
+
+[node name="Actors" type="Node3D" parent="."]
+
+[node name="ActorA" type="MeshInstance3D" parent="Actors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.8, -2.5)
+mesh = SubResource("capsule")
+surface_material_override/0 = SubResource("cat_mat")
+
+[node name="ActorB" type="MeshInstance3D" parent="Actors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.8, -4)
+mesh = SubResource("capsule")
+surface_material_override/0 = SubResource("cat_mat")
+
+[node name="ActorC" type="MeshInstance3D" parent="Actors"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.8, -3)
+mesh = SubResource("capsule")
+surface_material_override/0 = SubResource("cat_mat")
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9962, 0.0872, 0, -0.0872, 0.9962, 0, 1.3, 2.5)
+current = true
+fov = 60.0
