@@ -48,10 +48,10 @@ func find_best_target() -> LockOnTarget:
 	for candidate: LockOnTarget in _candidates():
 		var offset: Vector3 = candidate.get_lock_position() - _player.global_position
 		var flat := Vector3(offset.x, 0.0, offset.z)
-		var distance: float = flat.length()
-		if distance > stats.lock_on_range or distance < 0.001:
+		var distance: float = offset.length()  # 3D: elevation counts towards range
+		if distance > stats.lock_on_range or flat.length() < 0.001:
 			continue
-		if forward.dot(flat / distance) < cos_limit:
+		if forward.dot(flat.normalized()) < cos_limit:
 			continue
 		if distance < best_distance and _has_line_of_sight(candidate):
 			best = candidate
@@ -88,7 +88,7 @@ func tick(delta: float) -> void:
 		release()
 		return
 	var offset: Vector3 = _current_lock.get_lock_position() - _player.global_position
-	if Vector3(offset.x, 0.0, offset.z).length() > _player.stats.lock_break_range:
+	if offset.length() > _player.stats.lock_break_range:
 		release()
 		return
 	if _has_line_of_sight(_current_lock):
@@ -136,7 +136,7 @@ func _candidates() -> Array[LockOnTarget]:
 
 func _in_switch_range(target: LockOnTarget) -> bool:
 	var offset: Vector3 = target.get_lock_position() - _player.global_position
-	return Vector3(offset.x, 0.0, offset.z).length() <= _player.stats.lock_on_range
+	return offset.length() <= _player.stats.lock_on_range
 
 
 func _view_angle(target: LockOnTarget, forward: Vector3) -> float:

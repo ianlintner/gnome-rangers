@@ -121,8 +121,21 @@ func _load_settings() -> void:
 	var config := ConfigFile.new()
 	if config.load(SETTINGS_PATH) != OK:
 		return
-	look_sensitivity = float(config.get_value(SETTINGS_SECTION, "look_sensitivity", 1.0))
-	invert_y = bool(config.get_value(SETTINGS_SECTION, "invert_y", false))
+	look_sensitivity = sanitize_sensitivity(
+		config.get_value(SETTINGS_SECTION, "look_sensitivity", 1.0)
+	)
+	var invert: Variant = config.get_value(SETTINGS_SECTION, "invert_y", false)
+	invert_y = invert if invert is bool else false
+
+
+## Returns `value` when it is a finite, positive number, otherwise the default 1.0.
+static func sanitize_sensitivity(value: Variant) -> float:
+	if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT:
+		return 1.0
+	var number: float = float(value)
+	if is_nan(number) or is_inf(number) or number <= 0.0:
+		return 1.0
+	return number
 
 
 func _on_lock_on_changed(target: Node) -> void:

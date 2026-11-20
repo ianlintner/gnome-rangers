@@ -5,6 +5,9 @@ extends PlayerState
 ## Stamina is paid by [method PlayerState.try_dodge] before entering. Timings and
 ## distances come from [CharacterStats].
 
+## Acceleration high enough to reach the target velocity within one physics frame.
+const SNAP_ACCELERATION: float = 10000.0
+
 var _direction: Vector3 = Vector3.ZERO
 var _speed: float = 0.0
 var _move_time: float = 0.0
@@ -35,9 +38,10 @@ func physics_update(delta: float) -> void:
 	_elapsed += delta
 	_update_iframes()
 	if _elapsed < _move_time:
-		player.locomote(_direction * _speed, player.stats.acceleration * 10.0, delta)
+		player.locomote(_direction * _speed, SNAP_ACCELERATION, delta)
 	else:
-		player.locomote(Vector3.ZERO, player.stats.deceleration, delta)
+		# Recovery is stationary: stop dead so the roll never exceeds its distance.
+		player.locomote(Vector3.ZERO, SNAP_ACCELERATION, delta)
 	if _elapsed >= _move_time + player.stats.dodge_recovery:
 		state_machine.transition_to(&"Idle")
 

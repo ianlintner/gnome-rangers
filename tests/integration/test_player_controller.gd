@@ -189,3 +189,38 @@ func test_locked_player_faces_the_target_while_strafing() -> void:
 	var to_target: Vector3 = (target.global_position - _player.global_position).normalized()
 	assert_gt(_player.get_facing().dot(to_target), 0.97, "faces the target, not the move direction")
 	assert_gt(_player.global_position.x, 1.0, "still strafed to the right")
+
+
+func test_roll_covers_its_distance_then_holds_still_during_recovery() -> void:
+	var start: Vector3 = _player.global_position
+	Input.action_press(&"move_left")
+	Input.action_press(&"dodge")
+	await wait_physics_frames(2)
+	Input.action_release(&"dodge")
+	await wait_seconds(_player.stats.dodge_duration + PHYSICS_DT * 2.0)
+	var after_move: Vector3 = _player.global_position
+	assert_eq(_player.state_machine.current_state_name, &"Dodge", "still recovering")
+	assert_almost_eq(start.distance_to(after_move), _player.stats.dodge_distance, 0.3)
+	await wait_physics_frames(3)
+	assert_almost_eq(_player.global_position, after_move, Vector3.ONE * 0.001)
+	assert_almost_eq(_player.velocity.length(), 0.0, 0.001)
+	Input.action_release(&"move_left")
+
+
+func test_lock_on_uses_3d_range_for_elevated_targets() -> void:
+	var tower := PlayerWorld.make_dummy(Vector3(0, 50, -5))
+	add_child_autofree(tower)
+	await wait_physics_frames(2)
+	_player.lock_selector.toggle()
+	assert_null(_player.lock_selector.current_target, "50 m up is out of range")
+
+
+func test_lock_breaks_when_target_climbs_out_of_range() -> void:
+	var target := PlayerWorld.make_dummy(Vector3(0, 0, -5))
+	add_child_autofree(target)
+	await wait_physics_frames(2)
+	_player.lock_selector.toggle()
+	assert_eq(_player.lock_selector.current_target, target)
+	target.global_position.y += 50.0
+	_player.lock_selector.tick(PHYSICS_DT)
+	assert_null(_player.lock_selector.current_target)
