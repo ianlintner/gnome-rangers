@@ -1,0 +1,94 @@
+# Asset manifest: the single source of truth for generated assets.
+# Driven by tools/meshy/meshy.py (see tools/meshy/README.md).
+#
+# Scale convention (PLAN.md): 1 unit = 1 m at GNOME scale. Gnome 1.0 m, orc brute 4.0 m.
+# `height_meters` is passed to the Meshy Rigging API, which scales the rigged model to it,
+# so the GLBs arrive at real size with the pivot at the feet.
+#
+# Models (docs.meshy.ai/api/models, checked 2026-11-20): meshy-5 is retired; meshy-7.1 is the
+# current standard geometry model and meshy-7 its texture model (PBR maps up to 8K).
+
+budget:
+  max_credits: 900 # Card 2 cap; the CLI refuses to create a task past this ledger total.
+
+assets:
+  gnome_ranger:
+    kind: character
+    mode: text-to-3d # text-to-3d | image-to-3d (needs `image:` repo-relative path)
+    ai_model: meshy-7.1
+    previews: 2 # cheap iteration: generate N previews, inspect, then set `pick`
+    pick: 0 # chosen: widest (stockiest) silhouette at the polycount target; see README
+    target_polycount: 24000 # remeshed at preview time; PLAN budget is hero <= 30k tris
+    pose_mode: a-pose # Meshy rigging needs a textured biped facing +Z in an A/T pose
+    height_meters: 1.0
+    prompt: >-
+      Full-body stocky fantasy gnome ranger, weathered gritty realistic PBR, standing in a neutral
+      A-pose facing forward with arms slightly out from the body and legs shoulder width apart.
+      Big bulbous nose, long braided grey beard, long pointed ears poking out through an olive
+      green hood, layered worn forest-green and brown leather armour, leather bracers, a leather
+      quiver of arrows on the back, a recurve bow strapped across the back, a short sword in a
+      scabbard at the left hip. Realistic skin and stitched leather, moss and dirt stains, no
+      base, no scenery.
+    texture:
+      enable_pbr: true
+      resolution: 2k # hero textures <= 2048 per PLAN
+    rig:
+      skeleton_template: mixamo # meters, mixamo bone names: auto-maps to SkeletonProfileHumanoid
+    output: assets/characters/gnome_ranger
+    # Clip names are the project-wide names; action_id comes from the free library
+    # (GET /openapi/v1/animations/library). `note` records substitutions.
+    animations:
+      - {name: idle, action_id: 0, library_name: Idle, loop: true}
+      - {name: walk, action_id: 30, library_name: Casual Walk, loop: true}
+      - {name: run, action_id: 14, library_name: Run 2, loop: true}
+      - {name: sprint, action_id: 509, library_name: Lean Forward Sprint, loop: true}
+      - {name: dodge_roll, action_id: 158, library_name: Roll Dodge}
+      - {name: attack_light_1, action_id: 97, library_name: Left Slash}
+      - {name: attack_light_2, action_id: 219, library_name: Right-hand Sword Slash}
+      - {name: attack_light_3, action_id: 240, library_name: Thrust Slash}
+      - {name: attack_heavy, action_id: 242, library_name: Charged Slash}
+      - {name: hit_react, action_id: 178, library_name: Hit Reaction}
+      - {name: bow_draw, action_id: 224, library_name: Archery Shot, note: "no separate draw clip in the library; full draw-and-loose shot"}
+      - {name: bow_aim, action_id: 231, library_name: Archery Aim with Lateral Scan, loop: true, note: "aim-hold substitute"}
+      - {name: bow_release, action_id: 225, library_name: Archery Shot 1, note: "no separate release clip; alternate shot"}
+      - {name: death, action_id: 189, library_name: Dying Backwards}
+    # mount / dismount: the library has no horse or cat mount clips (only ladder/unicycle
+    # mounts), so they are NOT generated here. Card 3/6 owns the rider clips.
+
+  grukk_orc_brute:
+    kind: boss
+    rim_light: true # dark actor: post-import adds fx/materials/rim_light_pass.tres (PLAN rim-light rule)
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 2
+    pick: 0 # chosen: widest (stockiest) silhouette at the polycount target; see README
+    target_polycount: 32000 # PLAN budget: boss <= 40k tris
+    pose_mode: a-pose
+    # Authored at 4.0 m: PLAN/ARCHITECTURE fix the world at gnome scale (gnome 1.0 m), so Grukk
+    # is a 4x scale-up of the gnome, not a 2.0 m human-scale orc.
+    height_meters: 4.0
+    prompt: >-
+      Full-body Grukk the Ironjaw, a hulking top-heavy orc brute, enormous muscular chest and
+      arms on comparatively short legs, bald head, jutting lower jaw with two big tusks,
+      grey-green weathered skin with scars, rusted chainmail shirt, thick fur pelt pauldrons on
+      both shoulders, spiked leather bracers, a heavy flanged iron mace held in the right hand
+      hanging down. Gritty realistic PBR, standing in a neutral A-pose facing forward with arms
+      slightly out from the body and legs apart. No base, no scenery.
+    texture:
+      enable_pbr: true
+      resolution: 2k
+    rig:
+      skeleton_template: mixamo
+    output: assets/characters/grukk_orc_brute
+    animations:
+      - {name: idle, action_id: 0, library_name: Idle, loop: true}
+      - {name: walk, action_id: 119, library_name: Slow Orc Walk, loop: true}
+      - {name: run, action_id: 14, library_name: Run 2, loop: true}
+      - {name: attack_slam, action_id: 128, library_name: Heavy Hammer Swing, note: "overhead slam substitute: library's heaviest two-handed overhead swing"}
+      - {name: attack_sweep, action_id: 99, library_name: Reaping Swing, note: "horizontal sweep substitute"}
+      - {name: stomp, action_id: 255, library_name: Angry Ground Stomp}
+      - {name: grab, action_id: 389, library_name: Grip and Throw Down, note: "grab-and-throw substitute"}
+      - {name: roar, action_id: 386, library_name: Zombie Scream, note: "closest roar in the library"}
+      - {name: hit_react, action_id: 178, library_name: Hit Reaction}
+      - {name: stagger, action_id: 113, library_name: Mummy Stagger, note: "stagger substitute"}
+      - {name: death, action_id: 189, library_name: Dying Backwards}

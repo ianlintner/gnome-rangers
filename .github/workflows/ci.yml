@@ -39,6 +39,11 @@ jobs:
       - name: Install gdtoolkit
         run: pip install -r requirements-dev.txt
 
+      - name: Meshy CLI offline tests
+        run: |
+          pip install pyyaml
+          python3 tools/meshy/test_meshy.py
+
       - name: Lint and format check
         run: |
           gdlint .
