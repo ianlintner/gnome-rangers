@@ -1,29 +1,15 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Environment" path="res://fx/environment/forest_day.tres" id="1_env"]
+[ext_resource type="PackedScene" path="res://assets/characters/gnome_ranger/gnome_ranger.glb" id="2_gnome"]
+[ext_resource type="PackedScene" path="res://assets/characters/grukk_orc_brute/grukk_orc_brute.glb" id="3_orc"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="4_cam"]
 [ext_resource type="PackedScene" path="res://levels/sandbox/lock_on_dummy.tscn" id="5_dummy"]
-[ext_resource type="Shader" path="res://fx/shaders/rim_light.gdshader" id="2_rim"]
-
-[sub_resource type="ShaderMaterial" id="rim_mat"]
-shader = ExtResource("2_rim")
-shader_parameter/rim_color = Color(0.8863, 0.9020, 0.8353, 1)
-shader_parameter/rim_strength = 0.35
-shader_parameter/rim_power = 2.5
-
-[sub_resource type="StandardMaterial3D" id="cat_mat"]
-albedo_color = Color(0.0941, 0.102, 0.1059, 1)
-roughness = 0.7
-next_pass = SubResource("rim_mat")
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
 albedo_color = Color(0.3608, 0.2627, 0.1569, 1)
 roughness = 0.95
-
-[sub_resource type="CapsuleMesh" id="capsule"]
-radius = 0.4
-height = 1.6
 
 [sub_resource type="PlaneMesh" id="ground_mesh"]
 size = Vector2(60, 60)
@@ -102,25 +88,15 @@ cast_shadow = 3
 
 [node name="Actors" type="Node3D" parent="."]
 
-[node name="ActorA" type="MeshInstance3D" parent="Actors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8, 0.8, -2.5)
-mesh = SubResource("capsule")
-surface_material_override/0 = SubResource("cat_mat")
+[node name="Gnome" parent="Actors" instance=ExtResource("2_gnome")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 0, 1.5)
 
-[node name="ActorB" type="MeshInstance3D" parent="Actors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.8, -4)
-mesh = SubResource("capsule")
-surface_material_override/0 = SubResource("cat_mat")
-
-[node name="ActorC" type="MeshInstance3D" parent="Actors"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0.8, -3)
-mesh = SubResource("capsule")
-surface_material_override/0 = SubResource("cat_mat")
+[node name="Grukk" parent="Actors" instance=ExtResource("3_orc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.2, 0, -1.5)
 
 [node name="Camera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.9962, 0.0872, 0, -0.0872, 0.9962, 0, 1.3, 2.5)
-
-fov = 60.0
+transform = Transform3D(1, 0, 0, 0, 0.9848, 0.1736, 0, -0.1736, 0.9848, 0, 2.6, 8.5)
+fov = 55.0
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 camera_path = NodePath("../ThirdPersonCamera")
@@ -135,3 +111,4 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, -8)
 
 [node name="DummyFar" parent="Dummies" instance=ExtResource("5_dummy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -14)
+

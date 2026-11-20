@@ -1,0 +1,93 @@
+{
+  "rim_light": true,
+  "clips": [
+    {
+      "name": "idle",
+      "meshy_clip": "Idle",
+      "action_id": 0,
+      "library_name": "Idle",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "walk",
+      "meshy_clip": "Slow_Orc_Walk",
+      "action_id": 119,
+      "library_name": "Slow Orc Walk",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "run",
+      "meshy_clip": "Run_02",
+      "action_id": 14,
+      "library_name": "Run 2",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "attack_slam",
+      "meshy_clip": "Heavy_Hammer_Swing",
+      "action_id": 128,
+      "library_name": "Heavy Hammer Swing",
+      "loop": false,
+      "note": "overhead slam substitute: library's heaviest two-handed overhead swing"
+    },
+    {
+      "name": "attack_sweep",
+      "meshy_clip": "Reaping_Swing",
+      "action_id": 99,
+      "library_name": "Reaping Swing",
+      "loop": false,
+      "note": "horizontal sweep substitute"
+    },
+    {
+      "name": "stomp",
+      "meshy_clip": "Angry_Ground_Stomp",
+      "action_id": 255,
+      "library_name": "Angry Ground Stomp",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "grab",
+      "meshy_clip": "Grip_and_Throw_Down",
+      "action_id": 389,
+      "library_name": "Grip and Throw Down",
+      "loop": false,
+      "note": "grab-and-throw substitute"
+    },
+    {
+      "name": "roar",
+      "meshy_clip": "Zombie_Scream",
+      "action_id": 386,
+      "library_name": "Zombie Scream",
+      "loop": false,
+      "note": "closest roar in the library"
+    },
+    {
+      "name": "hit_react",
+      "meshy_clip": "Hit_Reaction",
+      "action_id": 178,
+      "library_name": "Hit Reaction",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "stagger",
+      "meshy_clip": "Mummy_Stagger",
+      "action_id": 113,
+      "library_name": "Mummy Stagger",
+      "loop": false,
+      "note": "stagger substitute"
+    },
+    {
+      "name": "death",
+      "meshy_clip": "Armature|dying_backwards|baselayer",
+      "action_id": 189,
+      "library_name": "Dying Backwards",
+      "loop": false,
+      "note": null
+    }
+  ]
+}

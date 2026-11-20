@@ -1,0 +1,117 @@
+{
+  "rim_light": false,
+  "clips": [
+    {
+      "name": "idle",
+      "meshy_clip": "Idle",
+      "action_id": 0,
+      "library_name": "Idle",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "walk",
+      "meshy_clip": "Casual_Walk",
+      "action_id": 30,
+      "library_name": "Casual Walk",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "run",
+      "meshy_clip": "Run_02",
+      "action_id": 14,
+      "library_name": "Run 2",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "sprint",
+      "meshy_clip": "Lean_Forward_Sprint",
+      "action_id": 509,
+      "library_name": "Lean Forward Sprint",
+      "loop": true,
+      "note": null
+    },
+    {
+      "name": "dodge_roll",
+      "meshy_clip": "Roll_Dodge",
+      "action_id": 158,
+      "library_name": "Roll Dodge",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "attack_light_1",
+      "meshy_clip": "Left_Slash",
+      "action_id": 97,
+      "library_name": "Left Slash",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "attack_light_2",
+      "meshy_clip": "Right_Hand_Sword_Slash",
+      "action_id": 219,
+      "library_name": "Right-hand Sword Slash",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "attack_light_3",
+      "meshy_clip": "Thrust_Slash",
+      "action_id": 240,
+      "library_name": "Thrust Slash",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "attack_heavy",
+      "meshy_clip": "Charged_Slash",
+      "action_id": 242,
+      "library_name": "Charged Slash",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "hit_react",
+      "meshy_clip": "Hit_Reaction",
+      "action_id": 178,
+      "library_name": "Hit Reaction",
+      "loop": false,
+      "note": null
+    },
+    {
+      "name": "bow_draw",
+      "meshy_clip": "Archery_Shot",
+      "action_id": 224,
+      "library_name": "Archery Shot",
+      "loop": false,
+      "note": "no separate draw clip in the library; full draw-and-loose shot"
+    },
+    {
+      "name": "bow_aim",
+      "meshy_clip": "Archery_Aim_with_Lateral_Scan",
+      "action_id": 231,
+      "library_name": "Archery Aim with Lateral Scan",
+      "loop": true,
+      "note": "aim-hold substitute"
+    },
+    {
+      "name": "bow_release",
+      "meshy_clip": "Archery_Shot_1",
+      "action_id": 225,
+      "library_name": "Archery Shot 1",
+      "loop": false,
+      "note": "no separate release clip; alternate shot"
+    },
+    {
+      "name": "death",
+      "meshy_clip": "dying_backwards",
+      "action_id": 189,
+      "library_name": "Dying Backwards",
+      "loop": false,
+      "note": null
+    }
+  ]
+}
