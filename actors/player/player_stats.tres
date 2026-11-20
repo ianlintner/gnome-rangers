@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CharacterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/character_stats.gd" id="1_stats"]
+
+[resource]
+script = ExtResource("1_stats")
+move_speed = 3.0
+sprint_speed = 6.0
+acceleration = 28.0
+deceleration = 36.0
+turn_rate = 12.0
+input_deadzone = 0.15
+dodge_distance = 3.2
+dodge_duration = 0.45
+dodge_recovery = 0.15
+iframe_start = 0.05
+iframe_duration = 0.3
+backstep_distance = 1.8
+backstep_duration = 0.3
+stamina_max = 100.0
+stamina_regen_rate = 30.0
+stamina_regen_delay = 1.0
+winded_duration = 1.5
+dodge_stamina_cost = 20.0
+sprint_stamina_per_second = 12.0
+stagger_duration = 0.5
+lock_on_range = 18.0
+lock_break_range = 24.0
+lock_cone_half_angle_degrees = 50.0
+lock_los_grace = 0.5
+lock_eye_height = 0.8
