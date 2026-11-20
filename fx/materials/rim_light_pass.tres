@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://fx/shaders/rim_light.gdshader" id="1_rim"]
+
+[resource]
+shader = ExtResource("1_rim")
+shader_parameter/rim_color = Color(0.8863, 0.9020, 0.8353, 1)
+shader_parameter/rim_strength = 0.35
+shader_parameter/rim_power = 2.5
