@@ -1,0 +1,99 @@
+{
+  "rim_light": true,
+  "clips": [
+    {
+      "name": "idle",
+      "meshy_clip": "idle",
+      "loop": true,
+      "frames": 90,
+      "fps": 30
+    },
+    {
+      "name": "walk",
+      "meshy_clip": "walk",
+      "loop": true,
+      "frames": 36,
+      "fps": 30
+    },
+    {
+      "name": "run",
+      "meshy_clip": "run",
+      "loop": true,
+      "frames": 24,
+      "fps": 30
+    },
+    {
+      "name": "gallop",
+      "meshy_clip": "gallop",
+      "loop": true,
+      "frames": 18,
+      "fps": 30
+    },
+    {
+      "name": "pounce",
+      "meshy_clip": "pounce",
+      "loop": false,
+      "frames": 55,
+      "fps": 30
+    },
+    {
+      "name": "hit",
+      "meshy_clip": "hit",
+      "loop": false,
+      "frames": 17,
+      "fps": 30
+    },
+    {
+      "name": "flee",
+      "meshy_clip": "flee",
+      "loop": true,
+      "frames": 24,
+      "fps": 30
+    },
+    {
+      "name": "sit",
+      "meshy_clip": "sit",
+      "loop": true,
+      "frames": 61,
+      "fps": 30
+    }
+  ],
+  "bones": [
+    "front_lower_l",
+    "front_lower_r",
+    "front_paw_l",
+    "front_paw_r",
+    "front_shoulder_l",
+    "front_shoulder_r",
+    "front_upper_l",
+    "front_upper_r",
+    "head",
+    "jaw",
+    "neck_01",
+    "neck_02",
+    "pelvis",
+    "rear_foot_l",
+    "rear_foot_r",
+    "rear_paw_l",
+    "rear_paw_r",
+    "rear_shin_l",
+    "rear_shin_r",
+    "rear_thigh_l",
+    "rear_thigh_r",
+    "root",
+    "saddle",
+    "spine_01",
+    "spine_02",
+    "spine_03",
+    "tail_01",
+    "tail_02",
+    "tail_03",
+    "tail_04",
+    "tail_05",
+    "tail_06"
+  ],
+  "saddle": {
+    "bone": "saddle",
+    "height_m": 0.798
+  }
+}

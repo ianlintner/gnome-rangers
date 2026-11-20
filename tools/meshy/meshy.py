@@ -384,6 +384,11 @@ def texture_payload(spec: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def is_unrigged(spec: dict[str, Any]) -> bool:
+    """True for assets that stop at the textured mesh (`rig: {skeleton_template: none}`)."""
+    return spec.get("rig", {}).get("skeleton_template") == "none"
+
+
 def build_tasks(name: str, spec: dict[str, Any], ledger: Ledger) -> list[Task]:
     """The full ordered task list for one asset, annotated with ledger state."""
     tasks: list[Task] = []
@@ -416,6 +421,12 @@ def build_tasks(name: str, spec: dict[str, Any], ledger: Ledger) -> list[Task]:
             summary = f"refine preview #{pick} (PBR {texture_payload(spec)['texture_resolution']})"
             tasks.append(Task(name, "refine", 0, texture_cost(spec), texture_payload(spec), summary))
         model_stage = "refine"
+    if is_unrigged(spec):
+        # Quadrupeds: Meshy rigs bipeds only, so the pipeline stops at the textured mesh and
+        # tools/blender/rig_cat.py rigs and animates it.
+        for task in tasks:
+            task.state = ledger.find(name, task.stage, task.variant)
+        return tasks
     rig_payload = {
         "height_meters": spec["height_meters"],
         "skeleton_template": spec.get("rig", {}).get("skeleton_template", "mixamo"),
@@ -707,7 +718,9 @@ def run_stages(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledge
             continue
         for task in tasks:
             runner.ensure(task, spec)
-        if "animate" in stages:
+        if is_unrigged(spec) and any(t.stage in ("refine", "image") for t in tasks):
+            finalize_unrigged(name, spec)
+        if "animate" in stages and not is_unrigged(spec):
             finalize_animation(name, spec)
     print(f"ledger total: {ledger.spent()} / {args.max_credits} credits")
     return 0
@@ -771,6 +784,17 @@ def cmd_reconcile(args: argparse.Namespace, manifest: dict[str, Any], ledger: Le
                    "est_credits": intent.get("est_credits", 0), "note": "reconciled"})
     print(f"adopted task {args.task_id}; re-run the command to resume it")
     return 0
+
+
+def finalize_unrigged(name: str, spec: dict[str, Any]) -> None:
+    """Copy the textured mesh to `<output>/source/<name>_source.glb` (input of the Blender rig)."""
+    textured = work_dir(spec) / "textured.glb"
+    if not textured.exists():
+        return
+    dest = asset_dir(spec) / "source" / f"{name}_source.glb"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(textured, dest)
+    print(f"  wrote  {dest.relative_to(REPO_ROOT)} (unrigged source for tools/blender)")
 
 
 def finalize_animation(name: str, spec: dict[str, Any]) -> None:
