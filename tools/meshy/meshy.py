@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import contextlib
 import json
 import mimetypes
 import os
@@ -36,7 +37,12 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows
+    fcntl = None  # type: ignore[assignment]
 
 try:
     import yaml
@@ -67,8 +73,17 @@ EXIT_BUDGET = 3
 EXIT_FAILED = 4
 
 
+TASK_ID_RE = re.compile(r"[A-Za-z0-9-]{8,64}")
+PATH_RE = re.compile(r"/openapi/v[0-9]+/[A-Za-z0-9/_.?=&%-]+")
+NOT_REUSED = ("FAILED", "CANCELED")
+
+
 class MeshyError(RuntimeError):
     """A recoverable, user-facing failure (bad manifest, API error, budget guard)."""
+
+
+class AmbiguousCreateError(MeshyError):
+    """A paid creation request may or may not have been accepted; never retried blindly."""
 
 
 # --------------------------------------------------------------------------- manifest
@@ -117,10 +132,29 @@ def now_iso() -> str:
 
 
 class Ledger:
-    """Append-only JSONL log of every paid Meshy task."""
+    """Append-only JSONL log of every paid Meshy task.
+
+    Events: ``intent`` (a creation is about to be sent; reserves credits), ``created`` (Meshy
+    acknowledged a task id), ``aborted`` (the intent was definitively not accepted), ``finished``
+    (terminal status), ``superseded`` (task no longer reused; its spend still counts) and
+    ``balance`` (informational).
+    """
 
     def __init__(self, path: Path) -> None:
         self.path = path
+
+    @contextlib.contextmanager
+    def lock(self) -> Iterator[None]:
+        """Exclusive cross-process lock so budget check + reservation are atomic."""
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self.path.open("a", encoding="utf-8") as handle:
+            if fcntl is not None:
+                fcntl.flock(handle, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                if fcntl is not None:
+                    fcntl.flock(handle, fcntl.LOCK_UN)
 
     def records(self) -> list[dict[str, Any]]:
         if not self.path.exists():
@@ -133,31 +167,56 @@ class Ledger:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=False) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+
+    @staticmethod
+    def _key(rec: dict[str, Any]) -> tuple[Any, Any, int]:
+        return (rec.get("asset"), rec.get("stage"), rec.get("variant", 0))
+
+    def pending_intents(self) -> dict[tuple[Any, Any, int], dict[str, Any]]:
+        """Creations sent (or about to be) with no acknowledgement or abort recorded."""
+        pending: dict[tuple[Any, Any, int], dict[str, Any]] = {}
+        for rec in self.records():
+            if rec.get("event") == "intent":
+                pending[self._key(rec)] = rec
+            elif rec.get("event") in ("created", "aborted"):
+                pending.pop(self._key(rec), None)
+        return pending
 
     def task_states(self) -> dict[str, dict[str, Any]]:
-        """Fold created/finished events into one state per task id."""
+        """Fold created/finished/superseded events into one state per task id."""
         tasks: dict[str, dict[str, Any]] = {}
         for rec in self.records():
             task_id = rec.get("task_id")
-            if not task_id:
+            if not task_id or rec.get("event") not in ("created", "finished", "superseded"):
                 continue
             state = tasks.setdefault(task_id, {"task_id": task_id})
+            if rec["event"] == "superseded":
+                state["superseded"] = True
+                continue
             state.update({k: v for k, v in rec.items() if k not in ("ts", "event")})
             state["event"] = rec["event"]
         return tasks
 
     def spent(self) -> int:
-        """Credits consumed. In-flight tasks count at their estimate (charged at creation)."""
-        total = 0
+        """Credits consumed, independent of whether a task is still reused.
+
+        In-flight tasks and unacknowledged intents count at their estimate (charged at
+        creation). Superseding a task never lowers the total: Meshy refunds nothing.
+        """
+        total = sum(int(rec.get("est_credits", 0)) for rec in self.pending_intents().values())
         for state in self.task_states().values():
-            if state["event"] == "created":
+            if state.get("event") == "created":
                 total += int(state.get("est_credits", 0))
-            elif state.get("status") != "FAILED":
+            elif state.get("status") == "SUCCEEDED":
                 total += int(state.get("consumed_credits") or 0)
+            elif state.get("status") == "CANCELED":
+                total += int(state.get("est_credits", 0))  # conservative: may have been charged
         return total
 
     def find(self, asset: str, stage: str, variant: int = 0) -> dict[str, Any] | None:
-        """Latest non-failed task for (asset, stage, variant), else None."""
+        """Latest reusable (successful or in-flight) task for (asset, stage, variant)."""
         match = None
         for state in self.task_states().values():
             same = (
@@ -165,7 +224,7 @@ class Ledger:
                 and state.get("stage") == stage
                 and state.get("variant", 0) == variant
             )
-            if same and state.get("status") != "FAILED":
+            if same and state.get("status") not in NOT_REUSED and not state.get("superseded"):
                 match = state
         return match
 
@@ -178,12 +237,26 @@ class Client:
 
     def __init__(self, key: str) -> None:
         self._key = key
+        self._opener = urllib.request.build_opener(_NoRedirect)
 
     def request(self, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+        """Authenticated call to the fixed Meshy origin.
+
+        Paths must be ``/openapi/...`` and redirects are refused, so the bearer token can never
+        be sent to another host. GETs retry on 429/5xx/network errors. A POST (paid creation) is
+        retried only after a 429 (the request was rejected); any other uncertain outcome raises
+        ``AmbiguousCreateError`` because Meshy may already have created, and charged for, the task.
+        """
+        if not PATH_RE.fullmatch(path) or ".." in path:
+            raise MeshyError(f"refusing request to unexpected path {path!r}")
+        url = API_BASE + path
+        if not url.startswith(API_BASE + "/openapi/"):
+            raise MeshyError("refusing request outside the Meshy API origin")
+        creating = method == "POST"
         data = json.dumps(body).encode() if body is not None else None
         for attempt in range(6):
             req = urllib.request.Request(
-                API_BASE + path,
+                url,
                 data=data,
                 method=method,
                 headers={
@@ -193,20 +266,33 @@ class Client:
                 },
             )
             try:
-                with urllib.request.urlopen(req, timeout=60) as resp:
+                with self._opener.open(req, timeout=60) as resp:
                     return json.loads(resp.read() or b"null")
             except urllib.error.HTTPError as err:
                 detail = err.read().decode(errors="replace")[:400]
-                retryable = err.code == 429 or err.code >= 500
-                if retryable and attempt < 5 and "NoMore" not in detail:
-                    time.sleep(int(err.headers.get("Retry-After", 5 * (attempt + 1))))
-                    continue
+                if err.code == 429 or (err.code >= 500 and not creating):
+                    if attempt < 5 and "NoMore" not in detail:
+                        time.sleep(int(err.headers.get("Retry-After", 5 * (attempt + 1))))
+                        continue
+                if creating and err.code >= 500:
+                    raise AmbiguousCreateError(
+                        f"{method} {path} -> HTTP {err.code}: outcome unknown"
+                    ) from None
                 raise MeshyError(f"{method} {path} -> HTTP {err.code}: {detail}") from None
-            except (urllib.error.URLError, TimeoutError):
+            except (urllib.error.URLError, TimeoutError, OSError):
+                if creating:
+                    raise AmbiguousCreateError(f"{method} {path}: network error, outcome unknown") from None
                 if attempt == 5:
                     raise MeshyError(f"{method} {path}: network error") from None
                 time.sleep(5 * (attempt + 1))
         raise MeshyError(f"{method} {path}: retries exhausted")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Never follow redirects on authenticated calls (they surface as HTTPError)."""
+
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
+        return None
 
 
 def download(url: str, dest: Path) -> None:
@@ -375,11 +461,33 @@ class Runner:
         return self._client
 
     def guard(self, task: Task) -> None:
+        """Refuse unresolved earlier creations and anything that would exceed the cap."""
+        key = (task.asset, task.stage, task.variant)
+        if key in self.ledger.pending_intents():
+            raise MeshyError(
+                f"{task.asset}/{task.stage}#{task.variant}: an earlier creation request has no "
+                "recorded outcome (it may have been charged). Check the Meshy dashboard, then run "
+                "'meshy.py reconcile' with --task-id <id> or --none (see tools/meshy/README.md)"
+            )
         total = self.ledger.spent() + task.est_credits
         if total > self.max_credits:
             raise MeshyError(
                 f"budget guard: ledger {self.ledger.spent()} + {task.est_credits} for "
                 f"{task.asset}/{task.stage} would exceed --max-credits {self.max_credits}"
+            )
+
+    def reserve(self, task: Task) -> None:
+        """Atomically check the cap and record the creation intent (reserving the credits)."""
+        with self.ledger.lock():
+            self.guard(task)
+            self.ledger.append(
+                {
+                    "event": "intent",
+                    "asset": task.asset,
+                    "stage": task.stage,
+                    "variant": task.variant,
+                    "est_credits": task.est_credits,
+                }
             )
 
     def resolve_inputs(self, task: Task, spec: dict[str, Any]) -> dict[str, Any]:
@@ -407,14 +515,28 @@ class Runner:
     def ensure(self, task: Task, spec: dict[str, Any]) -> dict[str, Any]:
         """Create (if needed) and wait for one task; returns its finished ledger state."""
         if task.state and task.state["event"] == "finished":
+            self.ensure_outputs(task, spec)
             print(f"  skip   {task.asset}/{task.stage}#{task.variant}: done ({task.state['task_id']})")
             return task.state
         if task.state is None:
-            self.guard(task)
             body = self.resolve_inputs(task, spec)
+            self.reserve(task)
             path = ENDPOINTS[task.stage]
-            result = self.client.request("POST", path, body)
-            task_id = result["result"]
+            try:
+                result = self.client.request("POST", path, body)
+            except AmbiguousCreateError as err:
+                raise MeshyError(
+                    f"{err}. The intent stays in the ledger (credits reserved) and further "
+                    "creation of this stage is blocked until you reconcile it"
+                ) from None
+            except MeshyError:
+                self.ledger.append(
+                    {"event": "aborted", "asset": task.asset, "stage": task.stage, "variant": task.variant}
+                )
+                raise
+            task_id = str(result["result"])
+            if not TASK_ID_RE.fullmatch(task_id):
+                raise MeshyError(f"unexpected task id format from Meshy for {task.asset}/{task.stage}")
             record = {
                 "event": "created",
                 "asset": task.asset,
@@ -439,13 +561,17 @@ class Runner:
     def wait(self, task: Task) -> dict[str, Any]:
         assert task.state is not None
         task_id = task.state["task_id"]
-        path = status_path(task.state["endpoint"], task_id)
+        path = status_path(task.stage, task_id)  # fixed stage map, never a ledger-supplied path
         deadline = time.time() + POLL_TIMEOUT_S
         while time.time() < deadline:
             data = self.client.request("GET", path)
             status = data.get("status")
             if status in ("SUCCEEDED", "FAILED", "CANCELED"):
                 error = (data.get("task_error") or {}).get("message", "")
+                if status == "SUCCEEDED":
+                    # Download first: if this fails the ledger still says in-flight, so the
+                    # next run polls (free) and fetches again instead of skipping the task.
+                    self.fetch_outputs(task, data)
                 credits = 0 if status != "SUCCEEDED" else data.get("consumed_credits", task.est_credits)
                 self.ledger.append(
                     {
@@ -462,35 +588,63 @@ class Runner:
                 if status != "SUCCEEDED":
                     raise MeshyError(f"{task.asset}/{task.stage} {task_id} {status}: {error}")
                 task.state = {**task.state, "event": "finished", "status": status}
-                self.fetch_outputs(task, data)
                 return task.state
             time.sleep(8)
         raise MeshyError(f"{task_id}: still running after {POLL_TIMEOUT_S // 60} min; re-run to resume")
 
+    def ensure_outputs(self, task: Task, spec: dict[str, Any]) -> None:
+        """Re-fetch a finished task's output by id (free GET) when its file is missing."""
+        if task.state is None or task.state.get("status") != "SUCCEEDED":
+            return
+        final_built = (asset_dir(spec) / f"{task.asset}.glb").exists()
+        if final_built and task.stage != "animate":
+            return  # intermediate work files are disposable once the deliverable exists
+        if output_file(task, spec).exists():
+            return
+        print(f"  refetch {task.asset}/{task.stage}#{task.variant}: output missing")
+        data = self.client.request("GET", status_path(task.stage, task.state["task_id"]))
+        if data.get("status") != "SUCCEEDED":
+            raise MeshyError(f"{task.asset}/{task.stage}: Meshy reports {data.get('status')}")
+        self.fetch_outputs(task, data)
+
     def fetch_outputs(self, task: Task, data: dict[str, Any]) -> None:
         spec = self.manifest["assets"][task.asset]
-        work = work_dir(spec)
         if task.stage in ("preview", "refine", "image"):
             url = (data.get("model_urls") or {}).get("glb")
-            label = f"preview_{task.variant}" if task.stage == "preview" else "textured"
             thumb = data.get("thumbnail_url")
             if thumb and task.stage == "preview":
-                download(thumb, work / f"preview_{task.variant}.png")
+                download(thumb, work_dir(spec) / f"preview_{task.variant}.png")
         elif task.stage == "rig":
             url = (data.get("result") or {}).get("rigged_character_glb_url")
-            label = "rigged"
         else:
             url = (data.get("result") or {}).get("animation_glb_url")
-            label = f"anim_{task.variant}"
         if not url:
             raise MeshyError(f"{task.asset}/{task.stage}: no GLB url in task result")
-        dest = work / f"{label}.glb"
+        dest = output_file(task, spec)
         download(url, dest)
         print(f"  saved  {dest.relative_to(REPO_ROOT)} ({dest.stat().st_size // 1024} KiB)")
 
 
-def status_path(endpoint: str, task_id: str) -> str:
-    return f"{endpoint}/{task_id}"
+def output_file(task: Task, spec: dict[str, Any]) -> Path:
+    """Where a task's primary GLB is stored in the asset's work directory."""
+    if task.stage == "preview":
+        label = f"preview_{task.variant}"
+    elif task.stage in ("refine", "image"):
+        label = "textured"
+    elif task.stage == "rig":
+        label = "rigged"
+    else:
+        label = f"anim_{task.variant}"
+    return work_dir(spec) / f"{label}.glb"
+
+
+def status_path(stage: str, task_id: str) -> str:
+    """Status URL path from the fixed stage map; the task id must look like a Meshy id."""
+    if stage not in ENDPOINTS:
+        raise MeshyError(f"unknown stage {stage!r}")
+    if not TASK_ID_RE.fullmatch(str(task_id)):
+        raise MeshyError("malformed task id")
+    return f"{ENDPOINTS[stage]}/{task_id}"
 
 
 # --------------------------------------------------------------------------- commands
@@ -507,6 +661,8 @@ def print_plan(manifest: dict[str, Any], names: list[str], ledger: Ledger, max_c
             cost = 0 if task.status == "done" else task.est_credits
             remaining += 0 if task.status == "in-flight" else cost
             print(f"  {task.status:<9} {task.stage:<8} #{task.variant}  ~{task.est_credits:>3} cr  {task.summary}")
+    for (asset, stage, variant) in ledger.pending_intents():
+        print(f"\nWARNING: unresolved creation {asset}/{stage}#{variant}; run 'reconcile' (README)")
     spent = ledger.spent()
     print(f"\nLedger spent so far : {spent} credits")
     print(f"Estimated remaining : {remaining} credits (no spend: dry run)")
@@ -571,11 +727,11 @@ def cmd_animate(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledg
 
 def cmd_status(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledger) -> int:
     known = ledger.task_states().get(args.task_id)
-    endpoints = [known["endpoint"]] if known else sorted(set(ENDPOINTS.values()))
+    stages = [known["stage"]] if known and known.get("stage") in ENDPOINTS else list(ENDPOINTS)
     client = get_client()
-    for endpoint in endpoints:
+    for stage in stages:
         try:
-            data = client.request("GET", status_path(endpoint, args.task_id))
+            data = client.request("GET", status_path(stage, args.task_id))
         except MeshyError:
             continue
         safe = {k: data.get(k) for k in ("id", "type", "status", "progress", "consumed_credits")}
@@ -585,13 +741,51 @@ def cmd_status(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledge
     raise MeshyError(f"task {args.task_id} not found on any endpoint")
 
 
+def cmd_supersede(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledger) -> int:
+    """Stop reusing a task so its stage regenerates. Spend stays counted (no refund)."""
+    known = ledger.task_states().get(args.task_id)
+    if not known or "stage" not in known:
+        raise MeshyError(f"task {args.task_id} is not in the ledger")
+    ledger.append({"event": "superseded", "task_id": args.task_id, "asset": known["asset"],
+                   "stage": known["stage"], "variant": known.get("variant", 0), "reason": args.reason})
+    print(f"superseded {known['asset']}/{known['stage']}#{known.get('variant', 0)}; "
+          f"ledger spend unchanged at {ledger.spent()} credits")
+    return 0
+
+
+def cmd_reconcile(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledger) -> int:
+    """Resolve a creation whose outcome was unknown (timeout / 5xx on a paid POST)."""
+    key = (args.asset, args.stage, args.variant)
+    intent = ledger.pending_intents().get(key)
+    if intent is None:
+        raise MeshyError(f"no unresolved creation for {args.asset}/{args.stage}#{args.variant}")
+    if args.none:
+        ledger.append({"event": "aborted", "asset": args.asset, "stage": args.stage,
+                       "variant": args.variant, "note": "confirmed not created"})
+        print("intent aborted; credits released")
+        return 0
+    if not TASK_ID_RE.fullmatch(args.task_id or ""):
+        raise MeshyError("--task-id must be the Meshy task id found on the dashboard")
+    ledger.append({"event": "created", "asset": args.asset, "stage": args.stage,
+                   "variant": args.variant, "task_id": args.task_id,
+                   "est_credits": intent.get("est_credits", 0), "note": "reconciled"})
+    print(f"adopted task {args.task_id}; re-run the command to resume it")
+    return 0
+
+
 def finalize_animation(name: str, spec: dict[str, Any]) -> None:
     """Write the final GLB and import.json once every animation batch has been downloaded."""
     work = work_dir(spec)
     batches = action_batches(spec)
     sources = [work / f"anim_{i}.glb" for i in range(len(batches))]
-    if not sources or not all(p.exists() for p in sources):
+    if not sources:
         return
+    missing = [p.name for p in sources if not p.exists()]
+    if missing:
+        raise MeshyError(
+            f"{name}: animation output missing ({', '.join(missing)}); re-run 'animate {name}' "
+            "to re-fetch it by task id without another charge"
+        )
     final = asset_dir(spec) / f"{name}.glb"
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import glb_merge  # local helper: reads clip names, merges clips from several GLBs
@@ -664,6 +858,20 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("status", help="show the status of one Meshy task (free)")
     p.add_argument("task_id")
     p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("supersede", help="stop reusing a ledger task so its stage regenerates")
+    p.add_argument("task_id")
+    p.add_argument("--reason", default="regenerate")
+    p.set_defaults(func=cmd_supersede)
+
+    p = sub.add_parser("reconcile", help="resolve a creation request with an unknown outcome")
+    p.add_argument("asset")
+    p.add_argument("stage", choices=sorted(ENDPOINTS))
+    p.add_argument("variant", type=int, nargs="?", default=0)
+    group = p.add_mutually_exclusive_group(required=True)
+    group.add_argument("--task-id", help="task id found on the Meshy dashboard")
+    group.add_argument("--none", action="store_true", help="dashboard shows no such task")
+    p.set_defaults(func=cmd_reconcile)
     return parser
 
 

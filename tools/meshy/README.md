@@ -25,6 +25,8 @@ export MESHY_API_KEY=$(tr -d '[:space:]' < ~/meshy.txt)   # never print, log or 
 | `rig <name>` | yes | Auto-rig the textured model at `height_meters`. |
 | `animate <name>` | yes | Apply `animations:` (batched by 10), write the final GLB + `import.json`. |
 | `status <task_id>` | no | Poll one task. |
+| `supersede <task_id>` | no | Stop reusing a task so its stage regenerates (spend stays counted). |
+| `reconcile <asset> <stage> [variant]` | no | Resolve a paid create whose outcome was unknown. |
 
 `--max-credits` (default `budget.max_credits` in the manifest, 900) is a hard guard: a task is
 never created if ledger spend plus its estimate would exceed it. Every created task and its result
@@ -66,19 +68,36 @@ Per hero, 2 previews + refine + rig + 10-14 clips is ~95 credits. Card 2 spent 1
 
 ## Regenerate one asset
 
-The ledger is append-only history, so never edit it. To redo a stage, mark its task superseded by
-appending a failed-finish line (retried stages are not double counted; the credits already spent
-stay in the history as the earlier `finished` line):
+The ledger is append-only history, so never edit it by hand. To redo a stage, supersede its task;
+the task is no longer reused, but its credits **stay counted** against `--max-credits` (Meshy
+refunds nothing):
 
 ```sh
-echo '{"event":"finished","asset":"gnome_ranger","stage":"animate","variant":0,"task_id":"<id>","status":"FAILED","consumed_credits":0,"error":"superseded"}' >> assets/meshy-ledger.jsonl
+python3 tools/meshy/meshy.py supersede <task_id> --reason "new prompt"
 python3 tools/meshy/meshy.py animate gnome_ranger
 ```
 
-To start an asset over completely (new prompt), change the manifest entry, set `pick: null`, mark
-the old preview/refine/rig/animate tasks superseded the same way, and follow the workflow above.
-Note that superseding refunds nothing at Meshy; the guard counts only non-superseded spend, so
-keep an eye on the real balance (`balance`).
+To start an asset over completely (new prompt), change the manifest entry, set `pick: null`,
+supersede the old preview/refine/rig/animate tasks the same way, and follow the workflow above.
+Because history counts, a full redo may need a higher `--max-credits`; raise it deliberately.
+
+## Safety behaviour
+
+- **Fixed origin.** Requests go only to `https://api.meshy.ai/openapi/...`; status URLs are built
+  from the stage and a validated task id (never from ledger text) and redirects are refused, so the
+  bearer token cannot be sent elsewhere.
+- **No blind retry of paid creates.** A paid POST is retried only after a 429 (rejected). On a
+  timeout, network error or 5xx the outcome is unknown, so the CLI stops. The `intent` line it wrote
+  before sending keeps the credits reserved and blocks re-creating that stage. Check the Meshy
+  dashboard, then either `reconcile <asset> <stage> [variant] --task-id <id>` (adopt the task) or
+  `reconcile <asset> <stage> [variant] --none` (nothing was created; releases the credits).
+- **Atomic cap.** Budget check and reservation happen under an exclusive lock on the ledger file,
+  so concurrent runs cannot both pass the guard.
+- **Resume never loses output.** Outputs are downloaded before a task is recorded finished; a
+  finished task whose file is missing is re-fetched by id (free GET), and `animate` fails if a batch
+  is absent instead of silently doing nothing.
+- **Canceled and failed tasks** are never reused; the next run creates a fresh task (a canceled
+  task is counted at its estimate, conservatively).
 
 ## Conventions and notes
 
