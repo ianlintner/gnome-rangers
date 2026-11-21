@@ -95,3 +95,39 @@ func test_slam_move_carries_a_shockwave_followup_hitbox() -> void:
 		if _boss.shockwave.active:
 			saw_ring = true
 	assert_true(saw_ring, "shockwave ring opened after the slam window")
+
+
+func test_stagger_while_shockwave_is_live_closes_the_ring() -> void:
+	_boss.target = _player
+	assert_true(_boss.start_move(SLAM))
+	# Wait for the ring to actually open: that is when the buggy timer path runs.
+	await _wait_for_live_shockwave()
+	var info := DamageInfo.new()
+	info.amount = 1.0
+	info.poise_damage = 1000.0
+	(_boss.get_node("HurtboxBody") as BossHurtbox).receive_damage(info)
+	assert_true(_boss.poise.staggered, "poise break staggered the boss")
+	assert_false(_boss.shockwave.active, "staggering mid-ring must close the live shockwave hitbox")
+
+
+func test_roar_while_shockwave_is_live_closes_the_ring() -> void:
+	_boss.target = _player
+	assert_true(_boss.start_move(SLAM))
+	await _wait_for_live_shockwave()
+	_hit_boss_body(310.0)
+	assert_eq(_boss.state_machine.current_state_name, &"PhaseTransition")
+	assert_false(_boss.shockwave.active, "roaring mid-ring must close the live shockwave hitbox")
+
+
+func _wait_for_live_shockwave() -> void:
+	for _i: int in range(120):
+		await get_tree().physics_frame
+		if _boss.shockwave.active:
+			return
+	assert_true(_boss.shockwave.active, "shockwave ring never opened")
+
+
+func _hit_boss_body(amount: float) -> void:
+	var info := DamageInfo.new()
+	info.amount = amount
+	(_boss.get_node("HurtboxBody") as BossHurtbox).receive_damage(info)

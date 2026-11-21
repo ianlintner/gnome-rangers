@@ -141,9 +141,11 @@ func _on_shockwave_timeout() -> void:
 
 
 func _close_shockwave() -> void:
-	if _shockwave_timer != null and not _shockwave_timer.is_stopped():
+	# SceneTreeTimer has no is_stopped(); a fired timer may already have been freed.
+	# Disconnecting from a pending timer (its signal is still connected) cancels it.
+	if _shockwave_timer != null and _shockwave_timer.timeout.is_connected(_on_shockwave_timeout):
 		_shockwave_timer.timeout.disconnect(_on_shockwave_timeout)
-		_shockwave_timer = null
+	_shockwave_timer = null
 	if shockwave != null:
 		shockwave.set_active(false)
 
