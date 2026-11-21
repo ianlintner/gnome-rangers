@@ -9,7 +9,7 @@
 # current standard geometry model and meshy-7 its texture model (PBR maps up to 8K).
 
 budget:
-  max_credits: 900 # Global cap; the CLI refuses to create a task past this ledger total. Card 3 (cat_mount) spent 110 of its 300.
+  max_credits: 900 # Global cap; the CLI refuses to create a task past this ledger total. Card 3 (cat_mount) spent 70 of its 300 (3 previews + 1 refine).
 
 assets:
   gnome_ranger:
