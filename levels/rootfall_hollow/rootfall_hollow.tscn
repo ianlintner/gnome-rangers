@@ -15,7 +15,6 @@
 [ext_resource type="PackedScene" path="res://assets/props/fern_cluster/fern_cluster.glb" id="13_0bhjh"]
 [ext_resource type="PackedScene" path="res://levels/checkpoint/checkpoint.tscn" id="14_k2u7r"]
 [ext_resource type="Script" path="res://levels/checkpoint/checkpoint.gd" id="15_oixm5"]
-[ext_resource type="Script" path="res://levels/rootfall_hollow/fog_gate_trigger.gd" id="16_w6ti4"]
 [ext_resource type="AudioStream" path="res://assets/audio/forest_ambient_loop.wav" id="17_0l0gw"]
 [ext_resource type="NavigationMesh" path="res://levels/rootfall_hollow/navmesh.res" id="18_g2suv"]
 [ext_resource type="PackedScene" path="res://levels/rootfall_hollow/fog_gate.tscn" id="19_fogg"]

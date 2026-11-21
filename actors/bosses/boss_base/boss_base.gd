@@ -19,6 +19,10 @@ var target: Node3D = null
 var engaged: bool = false
 var current_move: BossMoveData = null
 var speed_multiplier: float = 1.0
+## Latched on death so a later player death cannot resurrect a defeated boss.
+var defeated: bool = false
+
+var _shockwave_timer: SceneTreeTimer = null
 
 @onready var health: HealthComponent = $Health
 @onready var poise: PoiseComponent = $Poise
@@ -45,6 +49,8 @@ func _ready() -> void:
 	poise.poise_broken.connect(_on_staggered_changed)
 	health.died.connect(_on_died)
 	EventBus.player_died.connect(reset_boss)
+	if not GameState.run_reset.is_connected(reset_boss):
+		GameState.run_reset.connect(reset_boss)
 	state_machine.transition_to(&"Idle")
 
 
@@ -120,12 +126,24 @@ func _on_runner_phase_changed(phase: AttackRunner.Phase) -> void:
 	var followup: AttackData = current_move.followup_attack
 	if followup == null or shockwave == null:
 		return
+	_close_shockwave()  # A previous slam's stray timer must never close this ring early.
 	shockwave.configure(followup, self)
 	shockwave.set_active(true)
-	get_tree().create_timer(followup.active).timeout.connect(_close_shockwave)
+	_shockwave_timer = get_tree().create_timer(followup.active)
+	_shockwave_timer.timeout.connect(_on_shockwave_timeout)
+
+
+## Timer callback: the timer has already fired, so just clear the reference.
+func _on_shockwave_timeout() -> void:
+	_shockwave_timer = null
+	if shockwave != null:
+		shockwave.set_active(false)
 
 
 func _close_shockwave() -> void:
+	if _shockwave_timer != null and not _shockwave_timer.is_stopped():
+		_shockwave_timer.timeout.disconnect(_on_shockwave_timeout)
+		_shockwave_timer = null
 	if shockwave != null:
 		shockwave.set_active(false)
 
@@ -150,10 +168,11 @@ func _on_attack_finished(_attack: AttackData) -> void:
 
 
 func _on_staggered_changed() -> void:
-	if not poise.staggered or health.is_dead():
+	if not poise.staggered or health.is_dead() or health.invulnerable:
 		return
 	runner.cancel()
 	current_move = null
+	_close_shockwave()
 	state_machine.transition_to(&"Staggered")
 
 
@@ -162,7 +181,16 @@ func _on_phase_entered(phase: int, data: BossPhaseData) -> void:
 	speed_multiplier = data.speed_multiplier
 	EventBus.boss_phase_changed.emit(self, phase)
 	if data.on_enter_action == &"roar":
+		# The roar is invulnerable and must not leave an attack hitbox live.
+		runner.cancel()
+		current_move = null
+		_close_shockwave()
 		roar_started.emit()
+		var transition := (
+			state_machine.get_node_or_null("PhaseTransition") as BossPhaseTransitionState
+		)
+		if transition != null:
+			transition.begin(data.on_enter_duration)
 		state_machine.transition_to(&"PhaseTransition")
 	elif state_machine.current_state_name != &"Attack":
 		state_machine.transition_to(&"Approach")
@@ -173,13 +201,21 @@ func finish_phase_transition() -> void:
 
 
 func _on_died() -> void:
+	if defeated:
+		return
+	defeated = true
 	runner.cancel()
 	_close_shockwave()
+	GameState.mark_won()
 	EventBus.boss_defeated.emit(self)
 	state_machine.transition_to(&"Dead")
 
 
 func reset_boss() -> void:
+	# A beaten boss stays beaten; only a fresh run (GameState.reset_run) revives it.
+	if defeated and GameState.is_won():
+		return
+	defeated = false
 	engaged = false
 	target = null
 	current_move = null

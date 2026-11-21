@@ -123,3 +123,47 @@ func test_phase_two_moveset_adds_combo_and_leaping_slam() -> void:
 	assert_has(ids, &"combo")
 	assert_has(ids, &"leaping_slam")
 	assert_lt(_boss.brain.recovery_multiplier, 1.0, "faster recoveries in phase 2")
+
+
+func test_defeated_boss_stays_dead_after_player_death() -> void:
+	_boss.engage(_player)
+	_hit("Body", 1000.0)
+	assert_true(_boss.defeated)
+	assert_true(GameState.is_won())
+	EventBus.player_died.emit()
+	assert_true(_boss.health.is_dead(), "death is not undone by a later player death")
+	assert_true(_boss.defeated)
+	assert_eq(_boss.state_machine.current_state_name, &"Dead")
+
+
+func test_new_run_revives_a_defeated_boss() -> void:
+	_boss.engage(_player)
+	_hit("Body", 1000.0)
+	GameState.reset_run()
+	assert_false(_boss.defeated)
+	assert_almost_eq(_boss.health.current, _boss.health.max_health, 0.01)
+	assert_eq(_boss.state_machine.current_state_name, &"Idle")
+
+
+func test_phase_transition_cancels_an_in_flight_attack() -> void:
+	var move: BossMoveData = load("res://actors/bosses/orc_brute/moves/slam.tres")
+	_boss.engage(_player)
+	assert_true(_boss.start_move(move))
+	assert_true(_boss.runner.is_busy())
+	_hit("Body", 310.0)
+	assert_false(_boss.runner.is_busy(), "the roar never leaves a live attack")
+	assert_false((_boss.get_node("Hitbox") as HitboxComponent).active)
+	assert_false((_boss.get_node("ShockwaveHitbox") as HitboxComponent).active)
+
+
+func test_roar_ignores_health_and_poise_damage() -> void:
+	_boss.engage(_player)
+	_hit("Body", 310.0)
+	var before: float = _boss.health.current
+	var info := DamageInfo.new()
+	info.amount = 10.0
+	info.poise_damage = 100.0
+	assert_false((_boss.get_node("HurtboxBody") as BossHurtbox).receive_damage(info))
+	assert_almost_eq(_boss.health.current, before, 0.01)
+	assert_false(_boss.poise.staggered, "the roar cannot be interrupted by poise damage")
+	assert_eq(_boss.state_machine.current_state_name, &"PhaseTransition")
