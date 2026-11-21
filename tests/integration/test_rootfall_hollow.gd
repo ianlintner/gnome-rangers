@@ -122,6 +122,7 @@ func test_quality_tier_round_trips_high_dev_high() -> void:
 	var high_environment: Environment = level.get_node("WorldEnvironment").environment
 	var high_distance: float = sun.directional_shadow_max_distance
 	assert_true(high_environment.sdfgi_enabled)
+	assert_eq(high_environment.volumetric_fog_length, 80.0, "initial HIGH fog length")
 
 	level.apply_quality_tier(RootfallHollow.QualityTier.DEV)
 	var dev_environment: Environment = level.get_node("WorldEnvironment").environment
@@ -135,7 +136,7 @@ func test_quality_tier_round_trips_high_dev_high() -> void:
 	assert_eq(restored.sdfgi_enabled, high_environment.sdfgi_enabled)
 	assert_eq(restored.ssil_enabled, high_environment.ssil_enabled)
 	assert_eq(restored.ssao_enabled, high_environment.ssao_enabled)
-	assert_eq(restored.volumetric_fog_length, high_environment.volumetric_fog_length)
+	assert_eq(restored.volumetric_fog_length, 80.0, "restored HIGH fog length")
 	assert_eq(restored.volumetric_fog_detail_spread, high_environment.volumetric_fog_detail_spread)
 	assert_eq(sun.directional_shadow_max_distance, high_distance)
 	assert_eq(viewport.msaa_3d, Viewport.MSAA_2X, "HIGH restores MSAA")

@@ -11,6 +11,9 @@ extends Node3D
 ## (see docs/art-direction.md, "Rootfall Hollow overrides").
 enum QualityTier { HIGH, DEV }
 
+## HIGH-tier `volumetric_fog_length` override (metres), per docs/art-direction.md.
+const HIGH_FOG_LENGTH: float = 80.0
+
 ## The tier applied to this level's environment copy.
 @export var quality_tier: QualityTier = QualityTier.HIGH
 
@@ -58,6 +61,8 @@ func apply_quality_tier(tier: QualityTier) -> void:
 	_world_environment.environment = environment
 	_restore_renderer_baseline()
 	if tier != QualityTier.DEV:
+		# Documented HIGH override (docs/art-direction.md): deeper fog for god rays.
+		environment.volumetric_fog_length = HIGH_FOG_LENGTH
 		return
 	# iGPU tier: cascaded GI and screen-space GI are the heaviest passes.
 	environment.sdfgi_enabled = false
