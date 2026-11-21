@@ -17,6 +17,16 @@ extends Resource
 ## Stick look speed in radians per second at settings multiplier 1.0.
 @export var stick_radians_per_second: float = 3.2
 
+@export_group("Aim")
+## SpringArm3D length (m) while aiming the bow (over-the-shoulder).
+@export var aim_arm_length: float = 1.8
+## Sideways camera offset (m) while aiming; positive puts the player on the left.
+@export var aim_shoulder_offset: float = 0.6
+## Field of view (degrees) while aiming.
+@export var aim_fov: float = 50.0
+## Exponential rate at which arm length, offset and fov ease into and out of aim mode.
+@export var aim_smoothing: float = 10.0
+
 @export_group("Smoothing")
 ## Exponential follow rate for the pivot position (1/s); higher is snappier.
 @export var follow_smoothing: float = 14.0

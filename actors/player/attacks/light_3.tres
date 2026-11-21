@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AttackData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_attack"]
+
+[resource]
+script = ExtResource("1_attack")
+damage = 20.0
+poise_damage = 15.0
+stamina_cost = 14.0
+knockback = 3.0
+hit_stop_duration = 0.08
+hit_stop_time_scale = 0.05
+windup = 0.2
+active = 0.14
+recovery = 0.3
+dodge_cancel_start = 0.2
+chain_window_start = 0.34
+hit_shape = 0
+hit_size = Vector3(1.6, 1, 1.4)
+hit_offset = Vector3(0, 0.5, -1)
+animation_name = &"attack_light_3"

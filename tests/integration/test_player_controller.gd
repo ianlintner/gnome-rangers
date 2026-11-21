@@ -47,6 +47,7 @@ func test_movement_follows_camera_yaw() -> void:
 
 func _arm_hit_recording() -> void:
 	_hitbox = AttackerProbe.new()
+	_hitbox.damage = 0.5  # the player now has real health; keep the probe from killing it
 	add_child_autofree(_hitbox)
 	_player.hurtbox.hit_received.connect(
 		func(_amount: float, _source: Node) -> void: _landed.append(Engine.get_physics_frames())

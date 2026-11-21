@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" path="res://assets/characters/grukk_orc_brute/grukk_orc_brute.glb" id="3_orc"]
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="4_cam"]
-[ext_resource type="PackedScene" path="res://levels/sandbox/lock_on_dummy.tscn" id="5_dummy"]
+[ext_resource type="PackedScene" path="res://actors/enemies/training_dummy/training_dummy.tscn" id="5_dummy"]
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
 albedo_color = Color(0.3608, 0.2627, 0.1569, 1)

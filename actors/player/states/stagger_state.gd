@@ -1,13 +1,14 @@
 class_name StaggerState
 extends PlayerState
-## Stub: freezes the player for `stagger_duration`, then returns to idle.
-## Card 5 will hook hit reactions and poise into this.
+## Hit reaction after a poise break: holds the player for the poise stagger duration
+## (`CombatStats.stagger_duration`), then returns to idle. Leaving the previous state
+## already cancelled any attack or bow draw.
 
 var _remaining: float = 0.0
 
 
 func enter(_previous_state_name: StringName = &"") -> void:
-	_remaining = player.stats.stagger_duration
+	_remaining = player.poise.stagger_duration
 
 
 func physics_update(delta: float) -> void:

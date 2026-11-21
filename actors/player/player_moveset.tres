@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MeleeMoveset" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://core/data/melee_moveset.gd" id="1_moveset"]
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="2_attack_script"]
+[ext_resource type="Resource" path="res://actors/player/attacks/light_1.tres" id="3_l1"]
+[ext_resource type="Resource" path="res://actors/player/attacks/light_2.tres" id="4_l2"]
+[ext_resource type="Resource" path="res://actors/player/attacks/light_3.tres" id="5_l3"]
+[ext_resource type="Resource" path="res://actors/player/attacks/heavy.tres" id="6_heavy"]
+
+[resource]
+script = ExtResource("1_moveset")
+light_chain = Array[ExtResource("2_attack_script")]([ExtResource("3_l1"), ExtResource("4_l2"), ExtResource("5_l3")])
+heavy = ExtResource("6_heavy")
+input_buffer_time = 0.25

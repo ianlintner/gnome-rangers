@@ -48,9 +48,9 @@ extends Resource
 ## Stamina drained per second while sprinting.
 @export var sprint_stamina_per_second: float = 12.0
 
-@export_group("Stagger")
-## Seconds the stagger stub holds the player before returning to idle.
-@export var stagger_duration: float = 0.5
+@export_group("Combat")
+## Fraction of walk speed kept while the bow is aimed.
+@export var aim_move_speed_multiplier: float = 0.5
 
 @export_group("Lock-on")
 ## Maximum distance (m) at which a target can be acquired.

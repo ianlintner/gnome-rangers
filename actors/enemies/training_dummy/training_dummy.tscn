@@ -1,0 +1,78 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://actors/enemies/training_dummy/training_dummy.gd" id="1_dummy"]
+[ext_resource type="Resource" path="res://actors/enemies/training_dummy/training_dummy_stats.tres" id="2_stats"]
+[ext_resource type="Script" path="res://core/components/health_component.gd" id="3_health"]
+[ext_resource type="Script" path="res://core/components/poise_component.gd" id="4_poise"]
+[ext_resource type="Script" path="res://core/components/hurtbox_component.gd" id="5_hurtbox"]
+[ext_resource type="Script" path="res://core/components/lock_on_target.gd" id="6_lock"]
+
+[sub_resource type="CapsuleShape3D" id="body_shape"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="SphereShape3D" id="head_shape"]
+radius = 0.25
+
+[sub_resource type="CapsuleMesh" id="body_mesh"]
+radius = 0.4
+height = 1.4
+
+[sub_resource type="SphereMesh" id="head_mesh"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="straw_mat"]
+albedo_color = Color(0.3608, 0.2627, 0.1569, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="head_mat"]
+albedo_color = Color(0.5451, 0.1843, 0.1176, 1)
+roughness = 0.8
+
+[node name="TrainingDummy" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_dummy")
+stats = ExtResource("2_stats")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("body_shape")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+mesh = SubResource("body_mesh")
+surface_material_override/0 = SubResource("straw_mat")
+
+[node name="Head" type="MeshInstance3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+mesh = SubResource("head_mesh")
+surface_material_override/0 = SubResource("head_mat")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("3_health")
+
+[node name="Poise" type="Node" parent="."]
+script = ExtResource("4_poise")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+script = ExtResource("5_hurtbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7, 0)
+shape = SubResource("body_shape")
+
+[node name="HeadHurtbox" type="Area3D" parent="."]
+script = ExtResource("5_hurtbox")
+damage_multiplier = 2.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.65, 0)
+shape = SubResource("head_shape")
+
+[node name="LockOnTarget" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("6_lock")

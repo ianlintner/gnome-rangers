@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BowData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/data/bow_data.gd" id="1_bow"]
+[ext_resource type="Resource" path="res://actors/player/attacks/arrow.tres" id="2_arrow"]
+
+[resource]
+script = ExtResource("1_bow")
+arrow_attack = ExtResource("2_arrow")
+draw_time_full = 1.0
+min_damage_ratio = 0.3
+min_speed = 18.0
+max_speed = 42.0
+nock_time = 0.35
+gravity_scale = 1.0
+flight_lifetime = 4.0
+aim_range = 60.0
+muzzle_height = 0.7
+stuck_lifetime = 12.0
+max_stuck_arrows = 24
+embed_depth = 0.08
+pool_size = 8
