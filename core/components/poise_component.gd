@@ -50,6 +50,17 @@ func apply_stats(stats: CombatStats) -> void:
 	changed.emit(current, max_poise)
 
 
+## Clears accumulated poise, stagger and riposte. Used by full actor resets.
+func reset() -> void:
+	current = 0.0
+	_delay_left = 0.0
+	_stagger_left = 0.0
+	_riposte_left = 0.0
+	staggered = false
+	_set_riposte(false)
+	changed.emit(current, max_poise)
+
+
 ## Adds poise damage. Returns true when this hit broke poise.
 ## Hits while already staggered do not stack a second break.
 func take_poise_damage(amount: float) -> bool:

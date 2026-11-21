@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_op2p7"]
+
+[resource]
+resource_name = "Horizontal Sweep"
+script = ExtResource("1_op2p7")
+damage = 16.0
+poise_damage = 22.0
+windup = 0.6
+active = 0.2
+recovery = 0.45
+hit_size = Vector3(4, 1.6, 1.4)
+hit_offset = Vector3(0, 1.2, -1.8)
+animation_name = &"horizontal_sweep"

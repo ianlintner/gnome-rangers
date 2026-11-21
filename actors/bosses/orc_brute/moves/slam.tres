@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BossMoveData" format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/attacks/overhead_slam.tres" id="2_attack"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/attacks/shockwave_ring.tres" id="3_ring"]
+
+[resource]
+resource_name = "slam"
+script = ExtResource("1_move")
+id = &"slam"
+min_range = 0.0
+max_range = 5
+weight = 3
+cooldown = 3.2
+attack = ExtResource("2_attack")
+followup_attack = ExtResource("3_ring")
+windup_animation = &"attack_slam"

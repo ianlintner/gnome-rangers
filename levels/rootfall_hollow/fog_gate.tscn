@@ -1,0 +1,49 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://levels/rootfall_hollow/fog_gate.gd" id="1_gate"]
+[ext_resource type="PackedScene" path="res://actors/bosses/orc_brute/grukk.tscn" id="2_grukk"]
+
+[sub_resource type="BoxShape3D" id="trigger_shape"]
+size = Vector3(13, 6, 3)
+
+[sub_resource type="BoxShape3D" id="seal_shape"]
+size = Vector3(14, 6, 1)
+
+[sub_resource type="FogMaterial" id="fog_material"]
+density = 0.12
+albedo = Color(0.55, 0.68, 0.62, 1)
+emission = Color(0.12, 0.2, 0.16, 1)
+
+[node name="FogGate" type="Area3D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_gate")
+boss_scene = ExtResource("2_grukk")
+seal_front_path = NodePath("SealFront")
+seal_back_path = NodePath("SealBack")
+
+[node name="Shape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+shape = SubResource("trigger_shape")
+
+[node name="FogWall" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+size = Vector3(13, 8, 3)
+material = SubResource("fog_material")
+
+[node name="BossSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -19)
+
+[node name="SealFront" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0)
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape3D" parent="SealFront"]
+shape = SubResource("seal_shape")
+
+[node name="SealBack" type="StaticBody3D" parent="."]
+collision_layer = 0
+
+[node name="Shape" type="CollisionShape3D" parent="SealBack"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4, 0)
+shape = SubResource("seal_shape")

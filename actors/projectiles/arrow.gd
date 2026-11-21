@@ -53,6 +53,7 @@ func launch(
 ) -> void:
 	_data = data
 	hitbox.faction = faction
+	hitbox.damage_type = &"arrow"
 	hitbox.configure(attack, shooter, 0.0, false)
 	top_level = true
 	global_position = origin
