@@ -15,6 +15,37 @@ func try_dodge() -> bool:
 	return state_machine.transition_to(&"Dodge")
 
 
+## Starts the first light attack when pressed and stamina pays for it.
+func try_attack_light() -> bool:
+	if not Input.is_action_just_pressed(&"attack_light") or player.moveset.light_chain.is_empty():
+		return false
+	var first: AttackData = player.moveset.light_chain[0]
+	if not player.melee.start(first, player, player.stamina):
+		return false
+	return state_machine.transition_to(&"AttackLight")
+
+
+## Enters the heavy attack's charge when pressed and stamina could pay for it.
+func try_attack_heavy() -> bool:
+	if not Input.is_action_just_pressed(&"attack_heavy"):
+		return false
+	if not player.melee.can_start(player.moveset.heavy, player.stamina):
+		return false
+	return state_machine.transition_to(&"AttackHeavy")
+
+
+## Raises the bow while `aim` is held and the player is not winded.
+func try_aim() -> bool:
+	if not Input.is_action_pressed(&"aim") or player.stamina.is_winded():
+		return false
+	return state_machine.transition_to(&"Aim")
+
+
+## Every combat entry point, in priority order: aim, heavy, light.
+func try_combat() -> bool:
+	return try_aim() or try_attack_heavy() or try_attack_light()
+
+
 ## Moves to Fall when the body has left the ground.
 func try_fall() -> bool:
 	if player.is_on_floor():

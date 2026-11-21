@@ -6,7 +6,7 @@ extends PlayerState
 func physics_update(delta: float) -> void:
 	player.locomote(Vector3.ZERO, player.stats.deceleration, delta)
 	player.update_facing(Vector3.ZERO, delta)
-	if try_fall() or try_dodge():
+	if try_fall() or try_dodge() or try_combat():
 		return
 	if wants_sprint():
 		state_machine.transition_to(&"Sprint")

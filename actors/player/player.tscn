@@ -1,4 +1,4 @@
-[gd_scene load_steps=32 format=3]
+[gd_scene load_steps=46 format=3]
 
 [ext_resource type="Script" path="res://actors/player/player.gd" id="1_player"]
 [ext_resource type="Resource" path="res://actors/player/player_stats.tres" id="2_stats"]
@@ -12,6 +12,18 @@
 [ext_resource type="Script" path="res://actors/player/states/dodge_state.gd" id="10_dodge"]
 [ext_resource type="Script" path="res://actors/player/states/fall_state.gd" id="11_fall"]
 [ext_resource type="Script" path="res://actors/player/states/stagger_state.gd" id="12_stagger"]
+[ext_resource type="Script" path="res://core/components/health_component.gd" id="13_health"]
+[ext_resource type="Script" path="res://core/components/poise_component.gd" id="14_poise"]
+[ext_resource type="Script" path="res://core/components/hitbox_component.gd" id="15_hitbox"]
+[ext_resource type="Script" path="res://core/components/attack_runner.gd" id="16_runner"]
+[ext_resource type="Script" path="res://core/components/bow_component.gd" id="17_bow"]
+[ext_resource type="Script" path="res://actors/player/states/attack_light_state.gd" id="18_light"]
+[ext_resource type="Script" path="res://actors/player/states/attack_heavy_state.gd" id="19_heavy"]
+[ext_resource type="Script" path="res://actors/player/states/aim_state.gd" id="20_aim"]
+[ext_resource type="Script" path="res://actors/player/states/dead_state.gd" id="21_dead"]
+[ext_resource type="Resource" path="res://actors/player/player_combat_stats.tres" id="22_combat"]
+[ext_resource type="Resource" path="res://actors/player/player_moveset.tres" id="23_moveset"]
+[ext_resource type="Resource" path="res://actors/player/player_bow.tres" id="24_bow"]
 
 [sub_resource type="CapsuleShape3D" id="body_shape"]
 radius = 0.3
@@ -44,13 +56,45 @@ loop_mode = 1
 resource_name = "dodge_roll"
 length = 0.6
 
+[sub_resource type="Animation" id="anim_light_1"]
+resource_name = "attack_light_1"
+length = 0.47
+
+[sub_resource type="Animation" id="anim_light_2"]
+resource_name = "attack_light_2"
+length = 0.46
+
+[sub_resource type="Animation" id="anim_light_3"]
+resource_name = "attack_light_3"
+length = 0.64
+
+[sub_resource type="Animation" id="anim_heavy"]
+resource_name = "attack_heavy"
+length = 0.95
+
 [sub_resource type="AnimationLibrary" id="anim_lib"]
 _data = {
+&"attack_heavy": SubResource("anim_heavy"),
+&"attack_light_1": SubResource("anim_light_1"),
+&"attack_light_2": SubResource("anim_light_2"),
+&"attack_light_3": SubResource("anim_light_3"),
 &"dodge_roll": SubResource("anim_dodge"),
 &"idle": SubResource("anim_idle"),
 &"run": SubResource("anim_run"),
 &"walk": SubResource("anim_walk")
 }
+
+[sub_resource type="AnimationNodeAnimation" id="node_light_1"]
+animation = &"attack_light_1"
+
+[sub_resource type="AnimationNodeAnimation" id="node_light_2"]
+animation = &"attack_light_2"
+
+[sub_resource type="AnimationNodeAnimation" id="node_light_3"]
+animation = &"attack_light_3"
+
+[sub_resource type="AnimationNodeAnimation" id="node_heavy"]
+animation = &"attack_heavy"
 
 [sub_resource type="AnimationNodeAnimation" id="bp_idle"]
 animation = &"idle"
@@ -97,6 +141,14 @@ advance_mode = 2
 [sub_resource type="AnimationNodeStateMachineTransition" id="t_from_dodge"]
 
 [sub_resource type="AnimationNodeStateMachine" id="anim_sm"]
+states/attack_heavy/node = SubResource("node_heavy")
+states/attack_heavy/position = Vector2(800, 250)
+states/attack_light_1/node = SubResource("node_light_1")
+states/attack_light_1/position = Vector2(400, 250)
+states/attack_light_2/node = SubResource("node_light_2")
+states/attack_light_2/position = Vector2(533, 250)
+states/attack_light_3/node = SubResource("node_light_3")
+states/attack_light_3/position = Vector2(666, 250)
 states/Dodge/node = SubResource("node_dodge")
 states/Dodge/position = Vector2(600, 100)
 states/Locomotion/node = SubResource("locomotion")
@@ -110,6 +162,8 @@ collision_mask = 1
 floor_snap_length = 0.3
 script = ExtResource("1_player")
 stats = ExtResource("2_stats")
+combat_stats = ExtResource("22_combat")
+moveset = ExtResource("23_moveset")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
@@ -134,8 +188,26 @@ anim_player = NodePath("../AnimationPlayer")
 [node name="Stamina" type="Node" parent="."]
 script = ExtResource("4_stamina")
 
+[node name="Health" type="Node" parent="."]
+script = ExtResource("13_health")
+
+[node name="Poise" type="Node" parent="."]
+script = ExtResource("14_poise")
+
+[node name="Hitbox" type="Area3D" parent="."]
+script = ExtResource("15_hitbox")
+
+[node name="AttackRunner" type="Node" parent="."]
+script = ExtResource("16_runner")
+animation_player_path = NodePath("../PlayerModel/AnimationPlayer")
+
+[node name="Bow" type="Node" parent="."]
+script = ExtResource("17_bow")
+data = ExtResource("24_bow")
+
 [node name="Hurtbox" type="Area3D" parent="."]
 script = ExtResource("5_hurtbox")
+faction = &"player"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
@@ -164,3 +236,15 @@ script = ExtResource("11_fall")
 
 [node name="Stagger" type="Node" parent="StateMachine"]
 script = ExtResource("12_stagger")
+
+[node name="AttackLight" type="Node" parent="StateMachine"]
+script = ExtResource("18_light")
+
+[node name="AttackHeavy" type="Node" parent="StateMachine"]
+script = ExtResource("19_heavy")
+
+[node name="Aim" type="Node" parent="StateMachine"]
+script = ExtResource("20_aim")
+
+[node name="Dead" type="Node" parent="StateMachine"]
+script = ExtResource("21_dead")

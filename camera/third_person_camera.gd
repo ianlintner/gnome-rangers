@@ -23,9 +23,12 @@ var look_sensitivity: float = 1.0
 var invert_y: bool = false
 ## Node being framed while locked on, or null.
 var lock_target: Node3D = null
+## True while the bow is aimed: over-the-shoulder framing, lock-on framing is suspended.
+var aiming: bool = false
 
 var _target: Node3D = null
 var _base_arm: float = 0.0
+var _base_fov: float = 65.0
 
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var _arm: SpringArm3D = $SpringArm3D
@@ -42,7 +45,9 @@ func _ready() -> void:
 	pitch = deg_to_rad(tuning.default_pitch_degrees)
 	if not target_path.is_empty():
 		set_target(get_node_or_null(target_path) as Node3D)
+	_base_fov = camera.fov
 	EventBus.lock_on_changed.connect(_on_lock_on_changed)
+	EventBus.aim_changed.connect(set_aim_mode)
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_apply_rotation()
@@ -62,13 +67,13 @@ func _process(delta: float) -> void:
 	if _target != null:
 		var goal: Vector3 = _target.global_position + Vector3.UP * tuning.pivot_height
 		global_position = global_position.lerp(goal, 1.0 - exp(-tuning.follow_smoothing * delta))
-	if is_instance_valid(lock_target) and _target != null:
+	if is_instance_valid(lock_target) and _target != null and not aiming:
 		_frame_lock_target(delta)
 	else:
 		var stick: Vector2 = Input.get_vector(&"look_left", &"look_right", &"look_up", &"look_down")
 		var speed: float = tuning.stick_radians_per_second * look_sensitivity * delta
 		look(-stick.x * speed, -stick.y * speed)
-	_arm.spring_length = lerpf(_arm.spring_length, _desired_arm(), 1.0 - exp(-5.0 * delta))
+	_ease_aim_framing(delta)
 	_apply_rotation()
 
 
@@ -107,7 +112,21 @@ func _frame_lock_target(delta: float) -> void:
 		pitch = lerpf(pitch, goal_pitch, blend)
 
 
+## Switches over-the-shoulder aim framing on or off (driven by `EventBus.aim_changed`).
+func set_aim_mode(active: bool) -> void:
+	aiming = active
+
+
+func _ease_aim_framing(delta: float) -> void:
+	var blend: float = 1.0 - exp(-tuning.aim_smoothing * delta)
+	_arm.spring_length = lerpf(_arm.spring_length, _desired_arm(), blend)
+	camera.h_offset = lerpf(camera.h_offset, tuning.aim_shoulder_offset if aiming else 0.0, blend)
+	camera.fov = lerpf(camera.fov, tuning.aim_fov if aiming else _base_fov, blend)
+
+
 func _desired_arm() -> float:
+	if aiming:
+		return tuning.aim_arm_length
 	var extra: float = tuning.lock_on_extra_arm if is_instance_valid(lock_target) else 0.0
 	return _base_arm + extra
 

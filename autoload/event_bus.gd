@@ -36,6 +36,22 @@ signal damage_dealt(target: Node, amount: float, is_weak_point: bool)
 ## Emitted when an actor's poise breaks and the riposte window opens.
 signal poise_broken(actor: Node)
 
+## Emitted when an actor's health reaches zero.
+signal actor_died(actor: Node)
+
+## Emitted when an actor starts a stagger after a poise break.
+signal actor_staggered(actor: Node)
+
+## Emitted for every landed hit so VFX and SFX can react. `info` carries the contact
+## point, direction, weak-point flag and final damage.
+signal hit_feedback(info: DamageInfo)
+
+## Emitted when the player starts or stops aiming the bow (camera and reticle hook).
+signal aim_changed(active: bool)
+
+## Emitted while the bow is drawn; `ratio` runs 0..1 (reticle tightening hook).
+signal bow_draw_changed(ratio: float)
+
 ## Emitted when lock-on acquires, switches or releases its target.
 ## `target` is null when lock-on releases.
 signal lock_on_changed(target: Node)

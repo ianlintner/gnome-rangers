@@ -74,3 +74,25 @@ captures produced by `tools/capture/`.
 - Only CC0 third-party assets, credited in `assets/CREDITS.md`. No Mixamo.
 - glTF/GLB faces +Z forward with its pivot at the feet. Scale is 1 unit = 1 m at gnome scale
   (gnome about 1.0 m, cat about 0.9 m at the shoulder, orc brute about 4.0 m).
+
+## Combat conventions (card 5)
+
+- **Data first.** Every combat number lives in a `.tres`: `AttackData` (damage, poise,
+  stamina cost, timings, hitbox shape, animation, hit-stop, charge scaling), `CombatStats`
+  (health and poise tuning), `BowData` (draw, flight, sticking), `MeleeMoveset` (chain,
+  heavy, input buffer). Scripts hold no combat constants.
+- **Components.** `HealthComponent`, `PoiseComponent`, `HurtboxComponent` (routes hits,
+  `damage_multiplier` for weak points, `invulnerable` for i-frames, `faction` to avoid friendly
+  fire) and `HitboxComponent` (one hit per target per swing). Bosses and the mount reuse them
+  unchanged; an actor only wires signals (`died`, `poise_broken`, `damaged`).
+- **Hit windows.** `AttackRunner` plays one `AttackData`. If the clip has a call-method track
+  for `open_hit_window` / `close_hit_window` on the runner, the animation drives the window;
+  otherwise the `windup` / `active` / `recovery` timings do. Stamina is paid on `start`.
+- **Hit-stop.** One standard approach: `HitStop.request` dips `Engine.time_scale` for a short
+  real-time duration (set per attack in `AttackData`). No per-actor freezes.
+- **Bow.** `BowComponent` owns draw time and fires pooled `Arrow` scenes (`ArrowPool`). Arrows
+  sweep a ray each tick (no tunnelling), hit through the hitbox, then reparent to the hit
+  hurtbox's stick anchor and despawn after `stuck_lifetime`; the pool caps stuck arrows.
+  Aim state publishes `EventBus.aim_changed` / `bow_draw_changed` for the camera and HUD.
+- **EventBus.** `damage_dealt`, `actor_died`, `actor_staggered`, `hit_feedback(DamageInfo)`
+  (VFX and SFX hook).

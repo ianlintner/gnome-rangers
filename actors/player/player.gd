@@ -11,6 +11,10 @@ extends CharacterBody3D
 @export var stats: CharacterStats
 ## Optional camera rig that defines "camera-relative". Falls back to the body's facing.
 @export var camera_path: NodePath
+## Health and poise numbers; tuned in `player_combat_stats.tres`.
+@export var combat_stats: CombatStats
+## Light chain, heavy and input buffer; tuned in `player_moveset.tres`.
+@export var moveset: MeleeMoveset
 
 ## The camera rig movement is relative to, or null.
 var camera: ThirdPersonCamera = null
@@ -19,6 +23,10 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 
 var _anim_playback: AnimationNodeStateMachinePlayback = null
 
 @onready var stamina: StaminaComponent = $Stamina
+@onready var health: HealthComponent = $Health
+@onready var poise: PoiseComponent = $Poise
+@onready var melee: AttackRunner = $AttackRunner
+@onready var bow: BowComponent = $Bow
 @onready var hurtbox: HurtboxComponent = $Hurtbox
 @onready var state_machine: StateMachine = $StateMachine
 @onready var lock_selector: LockOnSelector = $LockOnSelector
@@ -31,8 +39,20 @@ func _ready() -> void:
 		stats = CharacterStats.new()
 	if not camera_path.is_empty():
 		camera = get_node_or_null(camera_path) as ThirdPersonCamera
+	if combat_stats == null:
+		combat_stats = CombatStats.new()
+	if moveset == null:
+		moveset = MeleeMoveset.new()
 	stamina.apply_stats(stats)
 	stamina.changed.connect(_on_stamina_changed)
+	health.apply_stats(combat_stats)
+	poise.apply_stats(combat_stats)
+	health.changed.connect(_on_health_changed)
+	health.died.connect(_on_died)
+	poise.poise_broken.connect(stagger)
+	hurtbox.damaged.connect(_on_damaged)
+	melee.animation_requested.connect(_on_attack_animation)
+	bow.draw_changed.connect(_on_draw_changed)
 	anim_tree.active = true
 	_anim_playback = anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	state_machine.state_changed.connect(_on_state_changed)
@@ -119,9 +139,21 @@ func update_facing(move_direction: Vector3, delta: float, allow_strafe: bool = t
 		face_direction(move_direction, delta)
 
 
-## Puts the player in the stagger stub state (card 5 will call this on poise break).
+## Puts the player in the Stagger state; called on poise break. A dead player stays dead.
 func stagger() -> void:
+	if health.is_dead():
+		return
 	state_machine.transition_to(&"Stagger")
+
+
+## Fires the drawn arrow from the chest along the camera's aim. Returns the arrow, or
+## null when not drawing or stamina refuses.
+func fire_bow() -> Arrow:
+	var origin: Vector3 = global_position + Vector3.UP * bow.data.muzzle_height
+	var view: Camera3D = camera.camera if camera != null else null
+	var exclude: Array[RID] = [hurtbox.get_rid()]
+	var direction: Vector3 = bow.aim_direction(self, origin, view, exclude)
+	return bow.fire(self, origin, direction, stamina)
 
 
 func _update_locomotion_blend() -> void:
@@ -132,10 +164,38 @@ func _update_locomotion_blend() -> void:
 
 
 func _on_state_changed(_from_name: StringName, to_name: StringName) -> void:
-	if _anim_playback == null:
+	if _anim_playback == null or to_name == &"AttackLight" or to_name == &"AttackHeavy":
+		return  # the attack runner requests the attack clip itself
+	var target: StringName = &"Dodge" if to_name == &"Dodge" else &"Locomotion"
+	if _anim_playback.get_current_node() == target:
 		return
-	_anim_playback.travel(&"Dodge" if to_name == &"Dodge" else &"Locomotion")
+	if _anim_playback.get_current_node() == &"Locomotion":
+		_anim_playback.travel(target)
+	else:
+		_anim_playback.start(target)  # attack nodes have no authored exits
+
+
+func _on_attack_animation(animation_name: StringName) -> void:
+	if _anim_playback != null and not animation_name.is_empty():
+		_anim_playback.start(animation_name)
 
 
 func _on_stamina_changed(current: float, maximum: float) -> void:
 	EventBus.player_stamina_changed.emit(current, maximum)
+
+
+func _on_health_changed(current: float, maximum: float) -> void:
+	EventBus.player_health_changed.emit(current, maximum)
+
+
+func _on_died() -> void:
+	state_machine.transition_to(&"Dead")
+	EventBus.player_died.emit()
+
+
+func _on_damaged(info: DamageInfo) -> void:
+	velocity += info.direction * info.knockback
+
+
+func _on_draw_changed(ratio: float) -> void:
+	EventBus.bow_draw_changed.emit(ratio)
