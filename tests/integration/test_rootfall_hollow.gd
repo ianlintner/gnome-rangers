@@ -187,7 +187,7 @@ func test_resting_in_the_level_checkpoint_becomes_the_respawn_point() -> void:
 
 func test_fog_gate_announces_the_boss_once_until_reset() -> void:
 	var level: Node3D = await _load_level()
-	var gate: FogGateTrigger = level.get_node("FogGate")
+	var gate: FogGate = level.get_node("FogGate") as FogGate
 	var body := Node3D.new()
 	add_child_autofree(body)
 	watch_signals(EventBus)

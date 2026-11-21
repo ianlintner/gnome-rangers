@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BossMoveData" format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/attacks/stomp.tres" id="2_attack"]
+
+[resource]
+resource_name = "stomp"
+script = ExtResource("1_move")
+id = &"stomp"
+min_range = 0.0
+max_range = 4
+weight = 2
+cooldown = 3.6
+attack = ExtResource("2_attack")
+windup_animation = &"attack_stomp"

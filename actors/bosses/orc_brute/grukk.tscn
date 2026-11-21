@@ -1,0 +1,216 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/orc_brute/grukk.gd" id="1_grukk"]
+[ext_resource type="CombatStats" path="res://actors/bosses/orc_brute/grukk_stats.tres" id="2_stats"]
+[ext_resource type="BossPhaseData" path="res://actors/bosses/orc_brute/grukk_phase_2.tres" id="3_phase2"]
+[ext_resource type="BossMoveData" path="res://actors/bosses/orc_brute/moves/slam.tres" id="4_slam"]
+[ext_resource type="BossMoveData" path="res://actors/bosses/orc_brute/moves/sweep.tres" id="5_sweep"]
+[ext_resource type="BossMoveData" path="res://actors/bosses/orc_brute/moves/stomp.tres" id="6_stomp"]
+[ext_resource type="BossMoveData" path="res://actors/bosses/orc_brute/moves/grab.tres" id="7_grab"]
+[ext_resource type="BossMoveData" path="res://actors/bosses/orc_brute/moves/roar.tres" id="8_roar"]
+[ext_resource type="Script" path="res://core/components/health_component.gd" id="9_health"]
+[ext_resource type="Script" path="res://core/components/poise_component.gd" id="10_poise"]
+[ext_resource type="Script" path="res://core/components/hitbox_component.gd" id="11_hitbox"]
+[ext_resource type="Script" path="res://core/components/attack_runner.gd" id="12_runner"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_brain.gd" id="13_brain"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_phase_controller.gd" id="14_phase"]
+[ext_resource type="Script" path="res://core/state_machine/state_machine.gd" id="15_sm"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_hurtbox.gd" id="16_hurtbox"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/idle_state.gd" id="17_idle"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/approach_state.gd" id="18_approach"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/strafe_state.gd" id="19_strafe"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/attack_state.gd" id="20_attack"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/staggered_state.gd" id="21_staggered"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/phase_transition_state.gd" id="22_phase_transition"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/states/dead_state.gd" id="23_dead"]
+[ext_resource type="PackedScene" path="res://assets/characters/grukk_orc_brute/grukk_orc_brute.glb" id="24_model"]
+
+[sub_resource type="CapsuleShape3D" id="body_shape"]
+radius = 1.3
+height = 4.0
+
+[sub_resource type="BoxShape3D" id="head_shape"]
+size = Vector3(0.9, 0.9, 0.9)
+
+[sub_resource type="BoxShape3D" id="back_shape"]
+size = Vector3(1.8, 1.4, 0.5)
+
+[sub_resource type="Animation" id="anim_idle"]
+resource_name = "idle"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_walk"]
+resource_name = "walk"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_slam"]
+resource_name = "attack_slam"
+length = 1.53
+
+[sub_resource type="Animation" id="anim_sweep"]
+resource_name = "attack_sweep"
+length = 1.25
+
+[sub_resource type="Animation" id="anim_stomp"]
+resource_name = "attack_stomp"
+length = 1.3
+
+[sub_resource type="Animation" id="anim_grab"]
+resource_name = "attack_grab"
+length = 1.46
+
+[sub_resource type="Animation" id="anim_roar"]
+resource_name = "roar"
+length = 1.5
+
+[sub_resource type="Animation" id="anim_combo"]
+resource_name = "attack_combo"
+length = 0.65
+
+[sub_resource type="Animation" id="anim_leap"]
+resource_name = "attack_leap"
+length = 1.55
+
+[sub_resource type="Animation" id="anim_death"]
+resource_name = "death"
+length = 1.5
+
+[sub_resource type="AnimationLibrary" id="anim_lib"]
+_data = {
+&"idle": SubResource("anim_idle"),
+&"walk": SubResource("anim_walk"),
+&"attack_slam": SubResource("anim_slam"),
+&"attack_sweep": SubResource("anim_sweep"),
+&"attack_stomp": SubResource("anim_stomp"),
+&"attack_grab": SubResource("anim_grab"),
+&"roar": SubResource("anim_roar"),
+&"attack_combo": SubResource("anim_combo"),
+&"attack_leap": SubResource("anim_leap"),
+&"death": SubResource("anim_death")
+}
+
+[node name="Grukk" type="CharacterBody3D"]
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_grukk")
+stats = ExtResource("2_stats")
+base_moves = [ExtResource("4_slam"), ExtResource("5_sweep"), ExtResource("6_stomp"), ExtResource("7_grab"), ExtResource("8_roar")]
+phases = [ExtResource("3_phase2")]
+walk_speed = 2.6
+strafe_speed = 1.8
+approach_stop_distance = 2.6
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+shape = SubResource("body_shape")
+
+[node name="Model" type="Node3D" parent="."]
+
+[node name="GrukkGlb" parent="Model" instance=ExtResource("24_model")]
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Model"]
+libraries = {
+"": SubResource("anim_lib")
+}
+
+[node name="RimLight" type="OmniLight3D" parent="Model"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, 1.2)
+light_color = Color(0.55, 0.8, 1, 1)
+light_energy = 4.0
+omni_range = 12.0
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("9_health")
+
+[node name="Poise" type="Node" parent="."]
+script = ExtResource("10_poise")
+
+[node name="Hitbox" type="Area3D" parent="."]
+script = ExtResource("11_hitbox")
+faction = &"enemy"
+
+[node name="ShockwaveHitbox" type="Area3D" parent="."]
+script = ExtResource("11_hitbox")
+faction = &"enemy"
+damage_type = &"aoe"
+
+[node name="AttackRunner" type="Node" parent="."]
+script = ExtResource("12_runner")
+hitbox_path = NodePath("../Hitbox")
+animation_player_path = NodePath("../Model/AnimationPlayer")
+play_animation_directly = true
+
+[node name="BossBrain" type="Node" parent="."]
+script = ExtResource("13_brain")
+turn_rate_degrees = 180.0
+
+[node name="PhaseController" type="Node" parent="."]
+script = ExtResource("14_phase")
+health_path = NodePath("../Health")
+phases = [ExtResource("3_phase2")]
+
+[node name="HurtboxBody" type="Area3D" parent="."]
+script = ExtResource("16_hurtbox")
+faction = &"enemy"
+health_path = NodePath("../Health")
+poise_path = NodePath("../Poise")
+zone = &"body"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HurtboxBody"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 0)
+shape = SubResource("body_shape")
+
+[node name="HurtboxHead" type="Area3D" parent="."]
+script = ExtResource("16_hurtbox")
+faction = &"enemy"
+damage_multiplier = 2.0
+health_path = NodePath("../Health")
+poise_path = NodePath("../Poise")
+zone = &"head"
+arrow_multiplier = 2.0
+melee_weak_multiplier = 1.25
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HurtboxHead"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, -0.2)
+shape = SubResource("head_shape")
+
+[node name="HurtboxBack" type="Area3D" parent="."]
+script = ExtResource("16_hurtbox")
+faction = &"enemy"
+damage_multiplier = 1.5
+health_path = NodePath("../Health")
+poise_path = NodePath("../Poise")
+zone = &"back"
+back_stagger_multiplier = 1.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HurtboxBack"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 1.0)
+shape = SubResource("back_shape")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("15_sm")
+initial_state = &"Idle"
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("17_idle")
+
+[node name="Approach" type="Node" parent="StateMachine"]
+script = ExtResource("18_approach")
+
+[node name="Strafe" type="Node" parent="StateMachine"]
+script = ExtResource("19_strafe")
+
+[node name="Attack" type="Node" parent="StateMachine"]
+script = ExtResource("20_attack")
+
+[node name="Staggered" type="Node" parent="StateMachine"]
+script = ExtResource("21_staggered")
+
+[node name="PhaseTransition" type="Node" parent="StateMachine"]
+script = ExtResource("22_phase_transition")
+duration = 1.4
+
+[node name="Dead" type="Node" parent="StateMachine"]
+script = ExtResource("23_dead")

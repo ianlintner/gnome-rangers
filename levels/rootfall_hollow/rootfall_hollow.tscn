@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://levels/rootfall_hollow/fog_gate_trigger.gd" id="16_w6ti4"]
 [ext_resource type="AudioStream" path="res://assets/audio/forest_ambient_loop.wav" id="17_0l0gw"]
 [ext_resource type="NavigationMesh" path="res://levels/rootfall_hollow/navmesh.res" id="18_g2suv"]
+[ext_resource type="PackedScene" path="res://levels/rootfall_hollow/fog_gate.tscn" id="19_fogg"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_mat"]
 sky_top_color = Color(0.2431, 0.3098, 0.2392, 1)
@@ -1983,20 +1984,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -305)
 [node name="BossSpawn" type="Marker3D" parent="." unique_id=1468669607]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -302)
 
-[node name="FogGate" type="Area3D" parent="." unique_id=746491260]
+[node name="FogGate" parent="." instance=ExtResource("19_fogg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -283)
-collision_layer = 0
-collision_mask = 2
-script = ExtResource("16_w6ti4")
-
-[node name="Shape" type="CollisionShape3D" parent="FogGate" unique_id=1252610784]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
-shape = SubResource("BoxShape3D_lhyvd")
-
-[node name="FogWall" type="FogVolume" parent="FogGate" unique_id=334276705]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
-size = Vector3(13, 8, 3)
-material = SubResource("FogMaterial_7i5la")
 
 [node name="AmbientLoop" type="AudioStreamPlayer" parent="." unique_id=356928562]
 stream = ExtResource("17_0l0gw")

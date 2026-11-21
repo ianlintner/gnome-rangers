@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CombatStats" format=3]
+
+[ext_resource type="Script" path="res://core/data/combat_stats.gd" id="1_mbvlu"]
+
+[resource]
+resource_name = "Grukk Combat Stats"
+script = ExtResource("1_mbvlu")
+max_health = 600.0
+poise_max = 70.0
+poise_regen_delay = 2.5
+poise_regen_rate = 12.0
+stagger_duration = 1.6
+riposte_duration = 1.8
+riposte_damage_multiplier = 1.4

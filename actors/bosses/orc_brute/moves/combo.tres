@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="BossMoveData" format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/attacks/combo_1.tres" id="2_attack"]
+
+[resource]
+resource_name = "combo"
+script = ExtResource("1_move")
+id = &"combo"
+min_range = 0.0
+max_range = 3
+weight = 3
+cooldown = 2.4
+attack = ExtResource("2_attack")
+min_phase = 2
+windup_animation = &"attack_combo"

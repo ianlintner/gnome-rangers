@@ -14,6 +14,8 @@ signal hit_landed(hurtbox: HurtboxComponent, info: DamageInfo)
 
 ## Side of the attacker; hurtboxes of the same faction are skipped.
 @export var faction: StringName = &"player"
+## Category stamped on every hit from this hitbox (`melee`, `arrow`, `heavy`, ...).
+@export var damage_type: StringName = &"melee"
 
 var attack: AttackData = null
 var attacker: Node = null
@@ -79,6 +81,7 @@ func apply_to(hurtbox: HurtboxComponent, hit_position: Vector3) -> bool:
 	if attack == null or _hit_actors.has(hurtbox.actor):
 		return false
 	var info: DamageInfo = DamageInfo.from_attack(attack, attacker, faction, charge_ratio)
+	info.damage_type = damage_type
 	info.hit_position = hit_position
 	info.direction = _direction_to(hit_position)
 	if not hurtbox.receive_damage(info):

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="BossMoveData" format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/attacks/grab_throw.tres" id="2_attack"]
+
+[resource]
+resource_name = "grab"
+script = ExtResource("1_move")
+id = &"grab"
+min_range = 0.0
+max_range = 2.4
+weight = 1.5
+cooldown = 5.5
+attack = ExtResource("2_attack")
+throw_speed = 14.0
+throw_lift = 6.0
+windup_animation = &"attack_grab"
