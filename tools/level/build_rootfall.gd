@@ -190,8 +190,10 @@ func _add_arena_wall(level: Node3D) -> void:
 		box.size = Vector3(2.0 * PI * radius / float(segments) + 0.4, 16.0, 1.0)
 		shape.shape = box
 		shape.transform = Transform3D(
-			Basis(Vector3.UP, theta + PI / 2.0),
-			RootfallLayout.ARENA_CENTER + Vector3(sin(theta), 8.0, cos(theta)) * radius
+			# The box's long local X axis must run along the perimeter: the tangent at angle theta
+			# (position (sin, cos) in XZ) is (cos, -sin), which is X rotated by theta about Y.
+			Basis(Vector3.UP, theta),
+			RootfallLayout.ARENA_CENTER + Vector3(sin(theta) * radius, 8.0, cos(theta) * radius)
 		)
 		wall.add_child(shape)
 		shape.owner = level
