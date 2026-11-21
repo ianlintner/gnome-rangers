@@ -427,6 +427,11 @@ def build_tasks(name: str, spec: dict[str, Any], ledger: Ledger) -> list[Task]:
         for task in tasks:
             task.state = ledger.find(name, task.stage, task.variant)
         return tasks
+    if is_prop(spec):
+        # Static props are never rigged or animated: preview -> refine is the whole pipeline.
+        for task in tasks:
+            task.state = ledger.find(name, task.stage, task.variant)
+        return tasks
     rig_payload = {
         "height_meters": spec["height_meters"],
         "skeleton_template": spec.get("rig", {}).get("skeleton_template", "mixamo"),
@@ -442,6 +447,11 @@ def build_tasks(name: str, spec: dict[str, Any], ledger: Ledger) -> list[Task]:
         task.state = ledger.find(name, task.stage, task.variant)
     _ = model_stage
     return tasks
+
+
+def is_prop(spec: dict[str, Any]) -> bool:
+    """Props (`kind: prop`) are static meshes: no rig, no animation clips."""
+    return spec.get("kind") == "prop"
 
 
 def model_stage_of(spec: dict[str, Any]) -> str:
@@ -665,7 +675,7 @@ def print_plan(manifest: dict[str, Any], names: list[str], ledger: Ledger, max_c
     remaining = 0
     for name in names:
         spec = manifest["assets"][name]
-        print(f"\n{name}  [{spec['mode']}, {spec['ai_model']}, {spec['height_meters']} m]")
+        print(f"\n{name}  [{spec['mode']}, {spec['ai_model']}, {spec.get('height_meters', spec.get('scale_to_meters'))} m]")
         if spec.get("pick") is None and spec["mode"] == "text-to-3d":
             print("  note: no 'pick' set in the manifest; refine/rig/animate unlock after you pick a preview")
         for task in build_tasks(name, spec, ledger):
@@ -727,7 +737,13 @@ def run_stages(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledge
 
 
 def cmd_generate(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledger) -> int:
-    return run_stages(args, manifest, ledger, {"preview", "refine", "image"})
+    code = run_stages(args, manifest, ledger, {"preview", "refine", "image"})
+    if not args.dry_run:
+        for name in asset_names(manifest, args.names):
+            spec = manifest["assets"][name]
+            if is_prop(spec):
+                finalize_prop(name, spec)
+    return code
 
 
 def cmd_rig(args: argparse.Namespace, manifest: dict[str, Any], ledger: Ledger) -> int:
@@ -795,6 +811,16 @@ def finalize_unrigged(name: str, spec: dict[str, Any]) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(textured, dest)
     print(f"  wrote  {dest.relative_to(REPO_ROOT)} (unrigged source for tools/blender)")
+
+
+def finalize_prop(name: str, spec: dict[str, Any]) -> None:
+    """Copy the textured refine output to the deliverable GLB of a static prop."""
+    source = work_dir(spec) / "textured.glb"
+    if not source.exists():
+        return  # refine not finished (or not picked yet)
+    final = asset_dir(spec) / f"{name}.glb"
+    shutil.copyfile(source, final)
+    print(f"  wrote  {final.relative_to(REPO_ROOT)}")
 
 
 def finalize_animation(name: str, spec: dict[str, Any]) -> None:

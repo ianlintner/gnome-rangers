@@ -9,7 +9,7 @@
 # current standard geometry model and meshy-7 its texture model (PBR maps up to 8K).
 
 budget:
-  max_credits: 485 # Card 2 spent 185 (cap 900); card 3 adds <= 300. The CLI refuses to create a task past this ledger total.
+  max_credits: 900 # Global cap; the CLI refuses to create a task past this ledger total. Card 3 (cat_mount) spent 110 of its 300.
 
 assets:
   gnome_ranger:
@@ -118,3 +118,109 @@ assets:
     rig:
       skeleton_template: none
     output: assets/characters/cat_mount
+
+  # ---- Card 8: Rootfall Hollow props (static; kind: prop = preview -> refine only, no rig). ----
+  # Budget: <= 600 credits for the card (run with --max-credits <ledger total at card start + 600>).
+  # `scale_to_meters` is the in-game height (longest vertical extent) the level scene scales the
+  # raw Meshy mesh to: Meshy meshes arrive unit-sized, and the level is at gnome scale (1 m gnome).
+  trunk_giant_a:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 8000
+    scale_to_meters: 22
+    prompt: >-
+      A colossal ancient old-growth temperate rainforest tree trunk segment, straight vertical
+      cylinder with deep furrowed dark brown bark, thick green moss covering the north side and
+      in the bark crevices, ferns and small fungi growing in the cracks, flared buttress roots at
+      the base, cut off flat at the top. Realistic gritty PBR, no ground plane, no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/trunk_giant_a
+  trunk_giant_b:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 8000
+    scale_to_meters: 22
+    prompt: >-
+      A colossal ancient redwood-like forest tree trunk segment, tall vertical column with
+      vertical fibrous reddish-grey bark ridges, heavy lichen and bright moss patches draped on one
+      side, a hollow knot opening, wide root flare at the base, flat cut top. Realistic gritty
+      PBR, no ground plane, no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/trunk_giant_b
+  root_arch:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 8000
+    scale_to_meters: 9
+    prompt: >-
+      A massive exposed tree root forming a natural arch, thick gnarled dark brown roots rising
+      out of the ground and looping over an open gap a person could walk through, covered in moss
+      and leaf litter on top, soil clumps clinging to the roots. Realistic gritty PBR, no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/root_arch
+  fallen_log:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 6000
+    scale_to_meters: 4
+    prompt: >-
+      A huge rotting fallen tree log lying horizontally, thick mossy bark peeling away, bracket
+      fungi shelves along the side, broken jagged end showing pale decayed wood, ferns growing on
+      top. Realistic gritty PBR, no ground plane, no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/fallen_log
+  fern_cluster:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 3000
+    scale_to_meters: 1.6
+    prompt: >-
+      A dense cluster of temperate forest sword ferns, arching green fronds radiating from a
+      central crown, slightly drooping tips, a few brown dead fronds, realistic PBR, no soil base,
+      no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/fern_cluster
+  mushroom_ring:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 8000
+    scale_to_meters: 0.9
+    prompt: >-
+      A fairy ring of pale cream and brown forest mushrooms of varied sizes arranged in a circle
+      about two metres across on a small mound of dark moss and leaf litter, a few tall caps with
+      soft white gills, tiny glowing-free realistic PBR, mossy stones set between the mushrooms,
+      no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/mushroom_ring
+  rock_mossy:
+    kind: prop
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 1
+    pick: 0
+    target_polycount: 4000
+    scale_to_meters: 1.4
+    prompt: >-
+      A large weathered grey-brown boulder partially covered in thick green moss and small lichen,
+      angular broken faces, a few small pebbles clustered at its base. Realistic gritty PBR, no
+      ground plane, no scenery.
+    texture: {enable_pbr: true, resolution: 2k}
+    output: assets/props/rock_mossy

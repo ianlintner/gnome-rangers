@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://tools/capture/rootfall_capture_rig.gd" id="1_rig"]
+[ext_resource type="PackedScene" path="res://levels/rootfall_hollow/rootfall_hollow.tscn" id="2_level"]
+[ext_resource type="PackedScene" path="res://assets/characters/gnome_ranger/gnome_ranger.glb" id="3_gnome"]
+[ext_resource type="PackedScene" path="res://assets/characters/grukk_orc_brute/grukk_orc_brute.glb" id="4_orc"]
+
+[node name="RootfallCapture" type="Node3D"]
+script = ExtResource("1_rig")
+
+[node name="Level" parent="." instance=ExtResource("2_level")]
+
+[node name="Actors" type="Node3D" parent="."]
+
+[node name="Gnome" parent="Actors" instance=ExtResource("3_gnome")]
+
+[node name="Grukk" parent="Actors" instance=ExtResource("4_orc")]
+
+[node name="CamApproach" type="Camera3D" parent="."]
+
+[node name="CamArenaWide" type="Camera3D" parent="."]
+
+[node name="CamHero" type="Camera3D" parent="."]

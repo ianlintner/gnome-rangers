@@ -1,0 +1,33 @@
+adapter: AMD Radeon 780M Graphics (RADV PHOENIX)
+scene: res://levels/rootfall_hollow/rootfall_hollow.tscn  tier: high  size: 1920x1080
+frames: 410 over 30.1s (warmup 3s excluded), flight 363 m
+average_fps: 13.6
+min_fps: 8.1  p99_frame_ms: 115.3
+t=  1.0s  fps=  10.9
+t=  2.1s  fps=  11.2
+t=  3.1s  fps=  11.8
+t=  4.2s  fps=  11.4
+t=  5.2s  fps=  11.4
+t=  6.3s  fps=  11.9
+t=  7.3s  fps=  10.2
+t=  8.4s  fps=  10.7
+t=  9.4s  fps=  10.5
+t= 10.4s  fps=  10.8
+t= 11.5s  fps=  11.0
+t= 12.6s  fps=  10.4
+t= 13.6s  fps=  11.8
+t= 14.7s  fps=  10.3
+t= 15.7s  fps=  10.7
+t= 16.7s  fps=  10.9
+t= 17.7s  fps=  10.7
+t= 18.7s  fps=  10.9
+t= 19.7s  fps=  11.0
+t= 20.8s  fps=  11.0
+t= 21.9s  fps=  10.5
+t= 22.9s  fps=  10.3
+t= 24.0s  fps=  10.1
+t= 25.0s  fps=   9.8
+t= 26.1s  fps=  11.9
+t= 27.1s  fps=  18.0
+t= 28.1s  fps=  35.7
+t= 29.1s  fps=  36.6

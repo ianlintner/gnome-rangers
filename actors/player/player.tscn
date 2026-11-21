@@ -1,0 +1,166 @@
+[gd_scene load_steps=32 format=3]
+
+[ext_resource type="Script" path="res://actors/player/player.gd" id="1_player"]
+[ext_resource type="Resource" path="res://actors/player/player_stats.tres" id="2_stats"]
+[ext_resource type="Script" path="res://core/state_machine/state_machine.gd" id="3_sm"]
+[ext_resource type="Script" path="res://core/components/stamina_component.gd" id="4_stamina"]
+[ext_resource type="Script" path="res://core/components/hurtbox_component.gd" id="5_hurtbox"]
+[ext_resource type="Script" path="res://actors/player/lock_on_selector.gd" id="6_selector"]
+[ext_resource type="Script" path="res://actors/player/states/idle_state.gd" id="7_idle"]
+[ext_resource type="Script" path="res://actors/player/states/move_state.gd" id="8_move"]
+[ext_resource type="Script" path="res://actors/player/states/sprint_state.gd" id="9_sprint"]
+[ext_resource type="Script" path="res://actors/player/states/dodge_state.gd" id="10_dodge"]
+[ext_resource type="Script" path="res://actors/player/states/fall_state.gd" id="11_fall"]
+[ext_resource type="Script" path="res://actors/player/states/stagger_state.gd" id="12_stagger"]
+
+[sub_resource type="CapsuleShape3D" id="body_shape"]
+radius = 0.3
+height = 1.0
+
+[sub_resource type="CapsuleMesh" id="body_mesh"]
+radius = 0.3
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="cloak_mat"]
+albedo_color = Color(0.2627, 0.3255, 0.1647, 1)
+roughness = 0.85
+
+[sub_resource type="Animation" id="anim_idle"]
+resource_name = "idle"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_walk"]
+resource_name = "walk"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_run"]
+resource_name = "run"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_dodge"]
+resource_name = "dodge_roll"
+length = 0.6
+
+[sub_resource type="AnimationLibrary" id="anim_lib"]
+_data = {
+&"dodge_roll": SubResource("anim_dodge"),
+&"idle": SubResource("anim_idle"),
+&"run": SubResource("anim_run"),
+&"walk": SubResource("anim_walk")
+}
+
+[sub_resource type="AnimationNodeAnimation" id="bp_idle"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="bp_walk_f"]
+animation = &"walk"
+
+[sub_resource type="AnimationNodeAnimation" id="bp_run_f"]
+animation = &"run"
+
+[sub_resource type="AnimationNodeAnimation" id="bp_walk_r"]
+animation = &"walk"
+
+[sub_resource type="AnimationNodeAnimation" id="bp_walk_l"]
+animation = &"walk"
+
+[sub_resource type="AnimationNodeAnimation" id="bp_walk_b"]
+animation = &"walk"
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="locomotion"]
+blend_point_0/node = SubResource("bp_idle")
+blend_point_0/pos = Vector2(0, 0)
+blend_point_1/node = SubResource("bp_walk_f")
+blend_point_1/pos = Vector2(0, 0.5)
+blend_point_2/node = SubResource("bp_run_f")
+blend_point_2/pos = Vector2(0, 1)
+blend_point_3/node = SubResource("bp_walk_r")
+blend_point_3/pos = Vector2(0.5, 0)
+blend_point_4/node = SubResource("bp_walk_l")
+blend_point_4/pos = Vector2(-0.5, 0)
+blend_point_5/node = SubResource("bp_walk_b")
+blend_point_5/pos = Vector2(0, -0.5)
+min_space = Vector2(-1, -1)
+max_space = Vector2(1, 1)
+
+[sub_resource type="AnimationNodeAnimation" id="node_dodge"]
+animation = &"dodge_roll"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_start"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_to_dodge"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_from_dodge"]
+
+[sub_resource type="AnimationNodeStateMachine" id="anim_sm"]
+states/Dodge/node = SubResource("node_dodge")
+states/Dodge/position = Vector2(600, 100)
+states/Locomotion/node = SubResource("locomotion")
+states/Locomotion/position = Vector2(400, 100)
+transitions = ["Start", "Locomotion", SubResource("t_start"), "Locomotion", "Dodge", SubResource("t_to_dodge"), "Dodge", "Locomotion", SubResource("t_from_dodge")]
+graph_offset = Vector2(0, 0)
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 0.3
+script = ExtResource("1_player")
+stats = ExtResource("2_stats")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("body_shape")
+
+[node name="PlayerModel" type="Node3D" parent="."]
+
+[node name="Placeholder" type="MeshInstance3D" parent="PlayerModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("body_mesh")
+surface_material_override/0 = SubResource("cloak_mat")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="PlayerModel"]
+libraries = {
+&"": SubResource("anim_lib")
+}
+
+[node name="AnimationTree" type="AnimationTree" parent="PlayerModel"]
+tree_root = SubResource("anim_sm")
+anim_player = NodePath("../AnimationPlayer")
+
+[node name="Stamina" type="Node" parent="."]
+script = ExtResource("4_stamina")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+script = ExtResource("5_hurtbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("body_shape")
+
+[node name="LockOnSelector" type="Node" parent="."]
+script = ExtResource("6_selector")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("3_sm")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("7_idle")
+
+[node name="Move" type="Node" parent="StateMachine"]
+script = ExtResource("8_move")
+
+[node name="Sprint" type="Node" parent="StateMachine"]
+script = ExtResource("9_sprint")
+
+[node name="Dodge" type="Node" parent="StateMachine"]
+script = ExtResource("10_dodge")
+
+[node name="Fall" type="Node" parent="StateMachine"]
+script = ExtResource("11_fall")
+
+[node name="Stagger" type="Node" parent="StateMachine"]
+script = ExtResource("12_stagger")
