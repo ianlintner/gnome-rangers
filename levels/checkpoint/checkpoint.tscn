@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/checkpoint/checkpoint.gd" id="1_jvlro"]
+[ext_resource type="PackedScene" path="res://assets/props/mushroom_ring/mushroom_ring.glb" id="2_e3u8x"]
+[ext_resource type="Script" path="res://core/components/interactable.gd" id="3_6osgq"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_ocfj0"]
+radius = 3.2
+
+[node name="Checkpoint" type="Node3D" unique_id=1680100043]
+script = ExtResource("1_jvlro")
+
+[node name="Ring" type="StaticBody3D" parent="." unique_id=862720030]
+metadata/size = Vector3(3.4, 0.8469684, 3.2185054)
+
+[node name="Model" type="Node3D" parent="Ring" unique_id=1921578631 instance=ExtResource("2_e3u8x")]
+transform = Transform3D(1.7888796, 0, 0, 0, 1.7888796, 0, 0, 0, 1.7888796, -0.002705623, 0.4241452, 0.0023130276)
+
+[node name="Interactable" type="Area3D" parent="." unique_id=522189871]
+script = ExtResource("3_6osgq")
+prompt_text = "Rest"
+
+[node name="Shape" type="CollisionShape3D" parent="Interactable" unique_id=387023591]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("SphereShape3D_ocfj0")
+
+[node name="Glow" type="OmniLight3D" parent="." unique_id=1153917573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+light_color = Color(1, 0.86, 0.6, 1)
+light_energy = 0.6
+omni_range = 7.0
