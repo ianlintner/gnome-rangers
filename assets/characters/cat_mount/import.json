@@ -5,28 +5,28 @@
       "name": "idle",
       "meshy_clip": "idle",
       "loop": true,
-      "frames": 90,
+      "frames": 91,
       "fps": 30
     },
     {
       "name": "walk",
       "meshy_clip": "walk",
       "loop": true,
-      "frames": 36,
+      "frames": 37,
       "fps": 30
     },
     {
       "name": "run",
       "meshy_clip": "run",
       "loop": true,
-      "frames": 24,
+      "frames": 25,
       "fps": 30
     },
     {
       "name": "gallop",
       "meshy_clip": "gallop",
       "loop": true,
-      "frames": 18,
+      "frames": 19,
       "fps": 30
     },
     {
@@ -47,7 +47,7 @@
       "name": "flee",
       "meshy_clip": "flee",
       "loop": true,
-      "frames": 24,
+      "frames": 25,
       "fps": 30
     },
     {
@@ -55,6 +55,13 @@
       "meshy_clip": "sit",
       "loop": true,
       "frames": 61,
+      "fps": 30
+    },
+    {
+      "name": "sit_down",
+      "meshy_clip": "sit_down",
+      "loop": false,
+      "frames": 23,
       "fps": 30
     }
   ],

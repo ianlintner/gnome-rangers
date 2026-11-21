@@ -4,7 +4,7 @@ Headless Blender scripts (Blender 5.3, official Linux tarball in `~/.local/opt/b
 
 | Script | Purpose |
 | --- | --- |
-| `rig_cat.py` | Rig and animate the Meshy cat mount: quadruped armature (spine, neck, head, jaw, 4 legs with paw bones, 6-bone tail, `saddle` socket), automatic weights, procedural clips `idle walk run gallop pounce hit flee sit`, GLB + `import.json` export. |
+| `rig_cat.py` | Rig and animate the Meshy cat mount: quadruped armature (spine, neck, head, jaw, 4 legs with paw bones, 6-bone tail, `saddle` socket), automatic weights, procedural clips `idle walk run gallop pounce hit flee sit sit_down`, GLB + `import.json` export. |
 
 ```sh
 ~/.local/opt/blender/blender -b -P tools/blender/rig_cat.py -- \

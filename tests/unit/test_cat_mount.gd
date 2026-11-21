@@ -32,6 +32,45 @@ func test_cycles_loop_and_one_shots_do_not() -> void:
 		)
 
 
+func _bone_rotations(animation: Animation, bone: String, time: float) -> Quaternion:
+	for track in animation.get_track_count():
+		if (
+			animation.track_get_type(track) == Animation.TYPE_ROTATION_3D
+			and str(animation.track_get_path(track)).ends_with(":" + bone)
+		):
+			return animation.rotation_track_interpolate(track, time)
+	fail_test("rotation track for %s" % bone)
+	return Quaternion.IDENTITY
+
+
+func test_loops_close_on_their_starting_pose() -> void:
+	var player: AnimationPlayer = _cat.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	var expected_seconds: Dictionary = {
+		&"idle": 3.0, &"walk": 1.2, &"run": 0.8, &"gallop": 0.6, &"flee": 0.8, &"sit": 2.0
+	}
+	for clip: StringName in expected_seconds:
+		var animation: Animation = player.get_animation(clip)
+		assert_almost_eq(animation.length, float(expected_seconds[clip]), 0.04, "%s length" % clip)
+		for bone: String in ["spine_02", "front_upper_l", "rear_shin_r", "tail_03"]:
+			var start: Quaternion = _bone_rotations(animation, bone, 0.0)
+			var end: Quaternion = _bone_rotations(animation, bone, animation.length)
+			assert_lt(start.angle_to(end), 0.02, "%s %s closes its loop" % [clip, bone])
+
+
+func test_sit_loop_stays_seated_and_sit_down_holds() -> void:
+	var player: AnimationPlayer = _cat.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_true(player.has_animation(&"sit_down"), "sit_down transition clip")
+	var sit: Animation = player.get_animation(&"sit")
+	var down: Animation = player.get_animation(&"sit_down")
+	assert_eq(down.loop_mode, Animation.LOOP_NONE, "sit_down is a one-shot")
+	var standing: Quaternion = _bone_rotations(down, "rear_shin_l", 0.0)
+	var seated: Quaternion = _bone_rotations(down, "rear_shin_l", down.length)
+	assert_gt(standing.angle_to(seated), 0.5, "sit_down changes pose")
+	for time: float in [0.0, sit.length * 0.5, sit.length]:
+		var pose: Quaternion = _bone_rotations(sit, "rear_shin_l", time)
+		assert_lt(pose.angle_to(seated), 0.05, "sit loop holds the seated pose at %.2fs" % time)
+
+
 func test_saddle_bone_and_tail_chain() -> void:
 	var skeleton: Skeleton3D = _cat.find_child("Skeleton3D", true, false) as Skeleton3D
 	assert_not_null(skeleton, "cat has a Skeleton3D")

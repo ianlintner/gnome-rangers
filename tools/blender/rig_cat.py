@@ -516,7 +516,9 @@ def stride_leg(pose: dict, kind: str, side: str, p: float, amp: float, fold: flo
 
 
 def make_cycle(name: str, frames: int, builder) -> tuple[str, int, list]:
-    return name, frames, [builder(f / frames) for f in range(frames)]  # last key == first (loop)
+    # frames + 1 samples: the last key repeats the first pose at t = frames / FPS, so the
+    # exported clip length is the full cycle and the wrap is seamless (Godot loops at length).
+    return name, frames + 1, [builder(f / frames) for f in range(frames + 1)]
 
 
 def walk_pose(t: float) -> tuple[dict, dict]:
@@ -681,7 +683,7 @@ def hit_pose(strength: float) -> dict:
 
 def sit_pose() -> dict:
     pose: dict = {}
-    add(pose, "pelvis", rx=-38)
+    add(pose, "pelvis", rx=-15)
     add(pose, "spine_01", rx=10)
     add(pose, "spine_02", rx=10)
     add(pose, "spine_03", rx=8)
@@ -751,7 +753,8 @@ def author_clips(rig: Rig, obj: bpy.types.Object) -> list[tuple[str, int, bool]]
     log(f"ground-contact vertices: {len(grounded)}")
     crouch_z = ground_offset(rig, obj, grounded, crouch_pose())
     land_z = ground_offset(rig, obj, grounded, land_pose())
-    sit_z = ground_offset(rig, obj, grounded, sit_pose())
+    # Seated: rump and front paws both rest on the ground, so snap on every vertex.
+    sit_z = ground_offset(rig, obj, np.arange(len(obj.data.vertices)), sit_pose())
     log(f"ground snap root z: crouch {crouch_z:+.3f} land {land_z:+.3f} sit {sit_z:+.3f}")
     clips = [
         make_cycle("idle", 90, idle_pose),
@@ -778,12 +781,21 @@ def author_clips(rig: Rig, obj: bpy.types.Object) -> list[tuple[str, int, bool]]
         ),
         make_cycle("flee", 24, flee_pose),
     ]
-    sit_hold = keyed_clip(
-        "sit",
-        [(0, REST, 0.0), (22, sit_pose(), sit_z), (60, blend(sit_pose(), REST, 0.0), sit_z)],
-    )
-    # sit: sit down, then hold (a loop whose keys are all the held pose after the sit-down).
-    clips.append(sit_hold)
+    sit_rest = sit_pose()
+
+    # `sit` is a seated wait loop (starts and ends seated, so the wrap never pops upright);
+    # `sit_down` is the one-shot stand -> seated transition that holds its final pose.
+    def sit_wait(t: float) -> tuple[dict, dict]:
+        pose = dict(sit_rest)
+        breath = math.sin(2 * math.pi * t)
+        add(pose, "spine_03", rx=-1.2 * breath)
+        add(pose, "neck_01", rx=0.8 * breath, rz=3.0 * breath)
+        add(pose, "head", rz=5.0 * math.sin(2 * math.pi * t - 0.4))
+        tail_wave(pose, t, 4.0)
+        return pose, {"root": (0, 0, sit_z)}
+
+    clips.append(make_cycle("sit", 60, sit_wait))
+    clips.append(keyed_clip("sit_down", [(0, REST, 0.0), (22, sit_rest, sit_z)]))
     arm = rig.arm
     arm.animation_data_create()
     summary = []
