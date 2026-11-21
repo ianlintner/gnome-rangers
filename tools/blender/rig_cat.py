@@ -39,6 +39,8 @@ from mathutils import Euler, Matrix, Quaternion, Vector
 
 FPS = 30
 MAX_INFLUENCES = 4
+SMOOTH_FACTOR = 0.5
+SMOOTH_REPEAT = 6
 MAX_TRIS = 30000
 
 # Bone names (Godot-friendly: no dots). Legs: front = shoulder/upper/lower/paw,
@@ -405,9 +407,50 @@ def bind_weights(obj: bpy.types.Object, arm: bpy.types.Object) -> dict:
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
     bpy.ops.object.mode_set(mode="OBJECT")
+    smooth_weights(obj, arm)
     bpy.ops.object.vertex_group_limit_total(group_select_mode="BONE_DEFORM", limit=MAX_INFLUENCES)
     bpy.ops.object.vertex_group_normalize_all(group_select_mode="BONE_DEFORM", lock_active=False)
     return {"unweighted": int(len(missing))}
+
+
+def smooth_weights(obj: bpy.types.Object, arm: bpy.types.Object) -> None:
+    """Heat weights tear where a leg or the jaw touches the torso/neck; blend them over the mesh
+    edges so neighbouring vertices follow the same bones (rows are re-normalised afterwards)."""
+    mesh = obj.data
+    deform = [b.name for b in arm.data.bones if b.use_deform]
+    column = {name: i for i, name in enumerate(deform)}
+    count = len(mesh.vertices)
+    matrix = np.zeros((count, len(deform)))
+    names = {g.index: g.name for g in obj.vertex_groups}
+    for vert in mesh.vertices:
+        for g in vert.groups:
+            if names[g.group] in column:
+                matrix[vert.index, column[names[g.group]]] = g.weight
+    edges = np.empty(len(mesh.edges) * 2, dtype=np.int64)
+    mesh.edges.foreach_get("vertices", edges)
+    a, b = edges[0::2], edges[1::2]
+    degree = np.bincount(np.concatenate([a, b]), minlength=count).astype(float)[:, None]
+    degree[degree == 0] = 1.0
+    for _ in range(SMOOTH_REPEAT):
+        acc = np.zeros_like(matrix)
+        np.add.at(acc, a, matrix[b])
+        np.add.at(acc, b, matrix[a])
+        matrix = (1.0 - SMOOTH_FACTOR) * matrix + SMOOTH_FACTOR * acc / degree
+    for name, col in column.items():
+        group = obj.vertex_groups.get(name) or obj.vertex_groups.new(name=name)
+        for index in range(count):
+            if matrix[index, col] > 0.01:
+                group.add([index], float(matrix[index, col]), "REPLACE")
+            elif _has(group, index):
+                group.remove([index])
+
+
+def _has(group: bpy.types.VertexGroup, index: int) -> bool:
+    try:
+        group.weight(index)
+    except RuntimeError:
+        return False
+    return True
 
 
 def fallback_weights(obj: bpy.types.Object, arm: bpy.types.Object, indices: np.ndarray) -> None:

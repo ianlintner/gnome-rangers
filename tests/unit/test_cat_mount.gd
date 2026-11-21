@@ -50,7 +50,7 @@ func test_loops_close_on_their_starting_pose() -> void:
 	}
 	for clip: StringName in expected_seconds:
 		var animation: Animation = player.get_animation(clip)
-		assert_almost_eq(animation.length, float(expected_seconds[clip]), 0.04, "%s length" % clip)
+		assert_almost_eq(animation.length, float(expected_seconds[clip]), 0.005, "%s length" % clip)
 		for bone: String in ["spine_02", "front_upper_l", "rear_shin_r", "tail_03"]:
 			var start: Quaternion = _bone_rotations(animation, bone, 0.0)
 			var end: Quaternion = _bone_rotations(animation, bone, animation.length)
