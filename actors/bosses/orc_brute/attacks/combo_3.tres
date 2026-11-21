@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_fwrfq"]
+
+[resource]
+resource_name = "Combo 3"
+script = ExtResource("1_fwrfq")
+damage = 20.0
+poise_damage = 26.0
+windup = 0.5
+active = 0.15
+recovery = 0.45
+hit_size = Vector3(2.4, 2, 1.8)
+hit_offset = Vector3(0, 1, -1.8)
+animation_name = &"combo_3"

@@ -185,15 +185,41 @@ func test_resting_in_the_level_checkpoint_becomes_the_respawn_point() -> void:
 	assert_eq(GameState.respawn_transform_for_player().origin, checkpoint.global_position)
 
 
+func _player_like_body() -> Node3D:
+	var body := Node3D.new()
+	var health := HealthComponent.new()
+	health.name = "Health"
+	body.add_child(health)
+	health.reset()
+	var poise := PoiseComponent.new()
+	poise.name = "Poise"
+	body.add_child(poise)
+	poise.reset()
+	add_child_autofree(body)
+	return body
+
+
 func test_fog_gate_announces_the_boss_once_until_reset() -> void:
 	var level: Node3D = await _load_level()
-	var gate: FogGateTrigger = level.get_node("FogGate")
-	var body := Node3D.new()
-	add_child_autofree(body)
+	var gate: FogGate = level.get_node("FogGate") as FogGate
+	var body := _player_like_body()
 	watch_signals(EventBus)
 	gate._on_body_entered(body)
 	gate._on_body_entered(body)
 	assert_signal_emit_count(EventBus, "boss_engaged", 1)
+	var payload: Object = get_signal_parameters(EventBus, "boss_engaged", 0)[0] as Object
+	assert_not_null(payload, "the engaged boss is never null")
 	GameState.reset_run()
 	gate._on_body_entered(body)
 	assert_signal_emit_count(EventBus, "boss_engaged", 2)
+
+
+func test_fog_gate_ignores_non_player_bodies() -> void:
+	var level: Node3D = await _load_level()
+	var gate: FogGate = level.get_node("FogGate") as FogGate
+	var scenery := Node3D.new()
+	add_child_autofree(scenery)
+	watch_signals(EventBus)
+	gate._on_body_entered(scenery)
+	assert_signal_emit_count(EventBus, "boss_engaged", 0)
+	assert_false(gate.is_sealed(), "a stray body does not latch the gate")

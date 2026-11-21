@@ -20,6 +20,9 @@ var hit_position: Vector3 = Vector3.ZERO
 var direction: Vector3 = Vector3.ZERO
 ## The attack this hit came from, if any.
 var attack: AttackData = null
+## Damage category (`melee`, `arrow`, `aoe`, ...). Set by the hitbox so hurtboxes can
+## apply conditional weak-point rules (e.g. head x2 vs arrows).
+var damage_type: StringName = &"melee"
 ## Set by the hurtbox: true when a weak-point hurtbox took the hit.
 var is_weak_point: bool = false
 ## Set by the hurtbox: damage actually applied after multipliers.

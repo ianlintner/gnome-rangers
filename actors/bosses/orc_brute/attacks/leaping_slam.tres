@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_g8sfo"]
+
+[resource]
+resource_name = "Leaping Slam"
+script = ExtResource("1_g8sfo")
+damage = 28.0
+poise_damage = 34.0
+windup = 0.85
+active = 0.2
+recovery = 0.5
+hit_shape = 2
+hit_size = Vector3(3.6, 1.2, 3.6)
+hit_offset = Vector3(0, 0.5, -2)
+animation_name = &"leaping_slam"

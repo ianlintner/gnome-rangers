@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_opthx"]
+
+[resource]
+resource_name = "Combo 2"
+script = ExtResource("1_opthx")
+damage = 12.0
+poise_damage = 14.0
+windup = 0.3
+active = 0.12
+recovery = 0.18
+hit_size = Vector3(2, 1.6, 1.4)
+hit_offset = Vector3(0, 1, -1.6)
+animation_name = &"combo_2"

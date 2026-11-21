@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_vwv5j"]
+
+[resource]
+resource_name = "Shockwave Ring"
+script = ExtResource("1_vwv5j")
+damage = 14.0
+poise_damage = 18.0
+windup = 0.1
+active = 0.3
+recovery = 0.35
+hit_shape = 2
+hit_size = Vector3(5, 0.6, 5)
+hit_offset = Vector3(0, 0.3, 0)
+animation_name = &"shockwave_ring"

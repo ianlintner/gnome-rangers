@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AttackData" format=3]
+
+[ext_resource type="Script" path="res://core/data/attack_data.gd" id="1_3pnwh"]
+
+[resource]
+resource_name = "Overhead Slam"
+script = ExtResource("1_3pnwh")
+damage = 24.0
+poise_damage = 30.0
+windup = 0.8
+active = 0.18
+recovery = 0.55
+hit_size = Vector3(2.4, 2.2, 2.4)
+hit_offset = Vector3(0, 1, -1.4)
+animation_name = &"overhead_slam"

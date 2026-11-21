@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="BossPhaseData" format=3]
+
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_phase_data.gd" id="1_phase"]
+[ext_resource type="Script" path="res://actors/bosses/boss_base/boss_move_data.gd" id="8_movescript"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/slam.tres" id="2_slam"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/sweep.tres" id="3_sweep"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/stomp.tres" id="4_stomp"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/grab.tres" id="5_grab"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/combo.tres" id="6_combo"]
+[ext_resource type="Resource" path="res://actors/bosses/orc_brute/moves/leaping_slam.tres" id="7_leap"]
+
+[resource]
+resource_name = "Grukk Phase 2"
+script = ExtResource("1_phase")
+hp_threshold = 0.5
+moveset_override = Array[ExtResource("8_movescript")]([ExtResource("2_slam"), ExtResource("3_sweep"), ExtResource("4_stomp"), ExtResource("5_grab"), ExtResource("6_combo"), ExtResource("7_leap")])
+speed_multiplier = 1.25
+recovery_multiplier = 0.7
+on_enter_action = &"roar"
+on_enter_duration = 1.4

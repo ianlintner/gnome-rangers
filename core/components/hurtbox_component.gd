@@ -46,6 +46,12 @@ func _ready() -> void:
 	poise = get_node_or_null(poise_path) as PoiseComponent
 
 
+## Dynamic multiplier for an incoming hit. Override in subclasses for conditional
+## weak points; the base implementation returns the exported [member damage_multiplier].
+func get_damage_multiplier(_info: DamageInfo) -> float:
+	return damage_multiplier
+
+
 ## True for hurtboxes that multiply damage (head and other weak points).
 func is_weak_point() -> bool:
 	return damage_multiplier > 1.0
@@ -62,8 +68,9 @@ func receive_damage(info: DamageInfo) -> bool:
 	if invulnerable or info.faction == faction or (health != null and health.is_dead()):
 		hit_ignored.emit(info.amount, info.source)
 		return false
-	info.is_weak_point = is_weak_point()
-	var amount: float = info.amount * damage_multiplier
+	var multiplier: float = get_damage_multiplier(info)
+	var amount: float = info.amount * multiplier
+	info.is_weak_point = multiplier > 1.0
 	if poise != null and poise.riposte_open:
 		amount *= poise.riposte_multiplier
 	info.final_amount = amount
