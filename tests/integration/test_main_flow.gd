@@ -61,6 +61,17 @@ func test_pause_shows_pause_menu_and_pauses_tree() -> void:
 	assert_eq(_main.state_name(), &"paused")
 	assert_true(get_tree().paused)
 	assert_eq(_main.current_menu().title_text(), "PAUSED")
+	assert_eq(
+		(_main.get_node("LevelHost") as Node).process_mode,
+		Node.PROCESS_MODE_PAUSABLE,
+		"level must freeze when the tree is paused"
+	)
+	assert_eq(
+		(_main.get_node("MenuHost") as CanvasLayer).process_mode,
+		Node.PROCESS_MODE_ALWAYS,
+		"menus must keep running while paused"
+	)
+	assert_true(get_tree().paused)
 	_main.resume()
 	assert_eq(_main.state_name(), &"playing")
 	assert_false(get_tree().paused)
@@ -72,11 +83,15 @@ func test_settings_can_be_opened_from_title_and_pause() -> void:
 	assert_eq(_main.current_menu().title_text(), "SETTINGS")
 	_main.close_settings()
 	assert_eq(_main.state_name(), &"title")
+	assert_not_null(_main.current_menu(), "title menu must be restored")
+	assert_eq(_main.current_menu().title_text(), "GNOME RANGERS")
 	_main.start_new_game()
 	_main.pause()
 	_main.open_settings(&"pause")
 	_main.close_settings()
 	assert_eq(_main.state_name(), &"paused")
+	assert_not_null(_main.current_menu(), "pause menu must be restored")
+	assert_eq(_main.current_menu().title_text(), "PAUSED")
 
 
 func test_death_screen_appears_on_player_died() -> void:
@@ -101,6 +116,24 @@ func test_respawn_refills_player_and_emits_boss_reset() -> void:
 	assert_eq(GameState.reset_token, token_before + 1)
 	assert_signal_emitted(GameState, "run_reset")
 	assert_signal_emitted(EventBus, "player_respawned")
+
+
+func test_respawn_revives_player_state_machine() -> void:
+	# A real Player has a FSM stuck in Dead after dying; the respawn signal must
+	# bring it back to Idle, not just refill its pools.
+	var level: Node3D = Node3D.new()
+	level.name = "Level"
+	var player: Node = preload("res://actors/player/player.tscn").instantiate()
+	player.name = "Player"
+	level.add_child(player)
+	_main.install_level(level)
+	var health: HealthComponent = player.get_node("Health") as HealthComponent
+	var fsm: StateMachine = player.get_node("StateMachine") as StateMachine
+	health.take_damage(health.max_health)
+	assert_eq(fsm.current_state_name, &"Dead")
+	_main.respawn()
+	assert_eq(fsm.current_state_name, &"Idle", "player must leave Dead on respawn")
+	assert_eq(health.current, health.max_health)
 
 
 func test_respawn_uses_checkpoint_transform() -> void:

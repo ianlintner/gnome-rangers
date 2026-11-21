@@ -48,13 +48,16 @@ var _level: Node = null
 
 @onready var _menu_host: CanvasLayer = $MenuHost
 @onready var _level_host: Node3D = $LevelHost
-@onready var _fade: ColorRect = $Fade
+@onready var _fade: ColorRect = $FadeLayer/Fade
 @onready var _hud: CanvasLayer = $HUD
 
 
 func _ready() -> void:
+	# Only the flow controller keeps processing while paused; the level host
+	# must stay PAUSABLE so the player/boss/AI actually freeze behind overlays.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_fade.visible = false
+	_hud.visible = false
 	_fade.color = Color(
 		Palette.FOREST_SHADOW.r, Palette.FOREST_SHADOW.g, Palette.FOREST_SHADOW.b, 0.0
 	)
@@ -244,8 +247,13 @@ func open_settings(return_state: StringName) -> void:
 func close_settings() -> void:
 	if _state != State.SETTINGS:
 		return
-	_clear_menu()
-	_set_state(_settings_return)
+	# Restore the screen we came from: clearing the menu without putting a new
+	# one up left the player stranded on a blank viewport.
+	match _settings_return:
+		State.PAUSED:
+			_show_menu(PAUSE_MENU, &"paused")
+		State.TITLE, _:
+			_show_menu(TITLE_MENU, &"title")
 
 
 ## Public entry point for tests and level scripts that drive death directly.
@@ -264,7 +272,7 @@ func _on_boss_engaged(_boss: Node) -> void:
 
 
 func _on_boss_defeated(_boss: Node) -> void:
-	if _state == State.VICTORY:
+	if _state == State.VICTORY or _state == State.TITLE:
 		return
 	GameState.mark_won()
 	get_tree().paused = false
@@ -278,17 +286,36 @@ func respawn() -> void:
 		var transform: Transform3D = GameState.respawn_transform_for_player()
 		if player is Node3D:
 			(player as Node3D).global_transform = transform
-		_refill_component(player, &"HealthComponent", &"max_health")
-		_refill_component(player, &"StaminaComponent", &"max_stamina")
+		_refill_health(player)
+		_refill_stamina(player)
 	EventBus.player_respawned.emit()
 	_begin_play()
 
 
-## Refills a component pool using its own maximum, then announces the new value
-## so the HUD updates without polling. Works for both HealthComponent and
-## StaminaComponent without changing either component's public API.
-func _refill_component(actor: Node, component_name: StringName, max_property: StringName) -> void:
-	var component: Node = actor.get_node_or_null(NodePath(component_name))
+## The real Player scene names its components Health/Stamina; older fixtures use
+## HealthComponent/StaminaComponent. Accept both so respawn works everywhere.
+func _find_component(actor: Node, names: Array[StringName]) -> Node:
+	for component_name: StringName in names:
+		var component: Node = actor.get_node_or_null(NodePath(component_name))
+		if component != null:
+			return component
+	return null
+
+
+func _refill_health(actor: Node) -> void:
+	var component: Node = _find_component(actor, [&"Health", &"HealthComponent"])
+	if component is HealthComponent:
+		(component as HealthComponent).reset()  # documented refill API; emits changed
+		return
+	_refill_pool(component, &"max_health")
+
+
+func _refill_stamina(actor: Node) -> void:
+	_refill_pool(_find_component(actor, [&"Stamina", &"StaminaComponent"]), &"max_stamina")
+
+
+## Generic fallback for fixtures that only expose `current`/`max_*` properties.
+func _refill_pool(component: Node, max_property: StringName) -> void:
 	if component == null or not (&"current" in component) or not (max_property in component):
 		return
 	var maximum: float = float(component.get(max_property))
