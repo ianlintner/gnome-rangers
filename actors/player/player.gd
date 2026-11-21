@@ -57,6 +57,20 @@ func _ready() -> void:
 	_anim_playback = anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	state_machine.state_changed.connect(_on_state_changed)
 	state_machine.transition_to(&"Idle")
+	EventBus.player_respawned.connect(revive)
+
+
+## Brings a dead player back to the idle state. Health/stamina pools are refilled
+## by the flow controller before it emits `player_respawned`; this only restarts
+## the state machine, which otherwise has no exit from Dead.
+func revive() -> void:
+	if state_machine.current_state_name == &"Dead":
+		state_machine.transition_to(&"Idle")
+
+
+func _exit_tree() -> void:
+	if EventBus.player_respawned.is_connected(revive):
+		EventBus.player_respawned.disconnect(revive)
 
 
 func _physics_process(_delta: float) -> void:
