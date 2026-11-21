@@ -122,8 +122,11 @@ func test_method_track_clip_drives_open_and_close_of_the_window() -> void:
 
 
 func test_open_only_track_falls_back_to_timings() -> void:
-	_make_swing({&"open_hit_window": 0.05})
+	var player: AnimationPlayer = _make_swing({&"open_hit_window": 0.05})
 	_runner.start(_attack, _actor, _stamina)
+	player.advance(0.07)  # the stray key fires at 0.05s, before the 0.1s windup ends
+	assert_false(_hitbox.active, "an open-only track must not open the window early")
+	assert_eq(_runner.phase, AttackRunner.Phase.WINDUP)
 	_runner.tick(0.11)
 	assert_true(_hitbox.active)
 	_runner.tick(0.2)

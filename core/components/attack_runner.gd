@@ -86,15 +86,27 @@ func tick(delta: float) -> void:
 	elapsed += delta
 	if not _clip_drives_window:
 		if phase == Phase.WINDUP and elapsed >= current.windup:
-			open_hit_window()
+			_open_window()
 		if phase == Phase.ACTIVE and elapsed >= current.windup + current.active:
-			close_hit_window()
+			_close_window()
 	if elapsed >= current.total_duration():
 		_finish()
 
 
-## Opens the hitbox. Called by the animation's method track (or by [method tick]).
+## Animation callback: opens the hitbox. Ignored unless the running clip drives the
+## window, so a stray or partial track can never override the fallback timings.
 func open_hit_window() -> void:
+	if _clip_drives_window:
+		_open_window()
+
+
+## Animation callback: closes the hitbox and enters recovery (same guard as above).
+func close_hit_window() -> void:
+	if _clip_drives_window:
+		_close_window()
+
+
+func _open_window() -> void:
 	if phase != Phase.WINDUP:
 		return
 	if _hitbox != null:
@@ -102,8 +114,7 @@ func open_hit_window() -> void:
 	_set_phase(Phase.ACTIVE)
 
 
-## Closes the hitbox and enters recovery.
-func close_hit_window() -> void:
+func _close_window() -> void:
 	if phase != Phase.ACTIVE:
 		return
 	if _hitbox != null:
