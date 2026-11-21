@@ -8,6 +8,7 @@ Licence terms are in [`LICENSE-ASSETS.md`](LICENSE-ASSETS.md) (CC-BY-4.0 unless 
 | --- | --- | --- |
 | `characters/gnome_ranger/` | Meshy (text-to-3d `meshy-7.1`, PBR refine, auto-rig, animation library) | Prompt in `manifest.yaml`. |
 | `characters/grukk_orc_brute/` | Meshy (same pipeline) | Prompt in `manifest.yaml`. |
+| `characters/cat_mount/` | Meshy (text-to-3d `meshy-7.1`, PBR refine; mesh + barding in one) rigged and animated headlessly in Blender by `tools/blender/rig_cat.py` | Meshy cannot rig quadrupeds. Source mesh in `source/`. No third-party rigged-cat fallback was used. |
 | `props/trunk_giant_a`, `trunk_giant_b`, `root_arch`, `fallen_log`, `fern_cluster`, `mushroom_ring`, `rock_mossy` | Meshy (text-to-3d `meshy-7.1`, PBR refine; static, no rig) | Rootfall Hollow props (card 8). Prompts in `manifest.yaml`. |
 
 Meshy output is used under the terms of the Meshy plan that generated it. Every paid task is

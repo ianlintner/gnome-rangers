@@ -9,7 +9,7 @@
 # current standard geometry model and meshy-7 its texture model (PBR maps up to 8K).
 
 budget:
-  max_credits: 900 # Card 2 cap; the CLI refuses to create a task past this ledger total.
+  max_credits: 900 # Global cap; the CLI refuses to create a task past this ledger total. Card 3 (cat_mount) spent 70 of its 300 (3 previews + 1 refine).
 
 assets:
   gnome_ranger:
@@ -92,6 +92,32 @@ assets:
       - {name: hit_react, action_id: 178, library_name: Hit Reaction}
       - {name: stagger, action_id: 113, library_name: Mummy Stagger, note: "stagger substitute"}
       - {name: death, action_id: 189, library_name: Dying Backwards}
+
+  # Quadruped: Meshy cannot rig it. The pipeline stops at the textured mesh
+  # (`skeleton_template: none`); tools/blender/rig_cat.py rigs + animates it headlessly.
+  cat_mount:
+    kind: mount
+    rim_light: true # black fur: post-import adds fx/materials/rim_light_pass.tres (PLAN rim-light rule)
+    mode: text-to-3d
+    ai_model: meshy-7.1
+    previews: 3
+    pick: 2 # chosen: only preview whose four paws read as four separate contacts (clean leg weights); see README
+    target_polycount: 26000 # PLAN budget: hero <= 30k tris (cat and barding are one mesh)
+    height_meters: 0.9 # at the shoulder (gnome scale); rig_cat.py normalises to this
+    prompt: >-
+      Full-body armoured black cat mount, rugged slightly feral long-haired black Maine Coon,
+      domestic cat proportions, shaggy ruff, tufted ears, glowing yellow eyes, standing on all four
+      legs in a side-view neutral pose, legs slightly apart, head up, mouth closed, long bushy tail
+      held low and straight behind. Gnomish worn leather barding: overlapping riveted leather
+      plates on chest, shoulders and flanks, a leather saddle over a woven olive, deep red and
+      ochre blanket, small pouches, rope, a feather charm. Gritty realistic PBR, no base, no
+      scenery.
+    texture:
+      enable_pbr: true
+      resolution: 2k
+    rig:
+      skeleton_template: none
+    output: assets/characters/cat_mount
 
   # ---- Card 8: Rootfall Hollow props (static; kind: prop = preview -> refine only, no rig). ----
   # Budget: <= 600 credits for the card (run with --max-credits <ledger total at card start + 600>).

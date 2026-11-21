@@ -104,6 +104,16 @@ class LedgerTests(Base):
         self.assertTrue(all(t.status == "pending" for t in tasks))
 
 
+class UnriggedTests(Base):
+    def test_unrigged_asset_stops_at_the_textured_mesh(self) -> None:
+        spec = {**SPEC, "rig": {"skeleton_template": "none"}}
+        self.assertTrue(meshy.is_unrigged(spec))
+        self.assertFalse(meshy.is_unrigged(SPEC))
+        tasks = meshy.build_tasks("a", spec, self.ledger)
+        self.assertEqual({t.stage for t in tasks}, {"preview", "refine"})
+        self.assertEqual(sum(t.est_credits for t in tasks), 20 + 10)  # picked preview + refine
+
+
 class GuardTests(Base):
     def test_budget_guard_blocks_before_any_request(self) -> None:
         client = FakeClient(post=lambda _p: {"result": TID})
