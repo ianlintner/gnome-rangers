@@ -84,9 +84,10 @@ func aim_direction(
 ) -> Vector3:
 	if camera == null:
 		return -shooter.global_basis.z
-	var ray_from: Vector3 = camera.global_position
-	var ray_dir: Vector3 = -camera.global_basis.z
-	var ray_to: Vector3 = ray_from + ray_dir * data.aim_range
+	# Project through the reticle (viewport centre) so the shoulder `h_offset` is honoured.
+	var centre: Vector2 = camera.get_viewport().get_visible_rect().size * 0.5
+	var ray_from: Vector3 = camera.project_ray_origin(centre)
+	var ray_to: Vector3 = ray_from + camera.project_ray_normal(centre) * data.aim_range
 	var query := PhysicsRayQueryParameters3D.create(ray_from, ray_to, Arrow.HIT_MASK)
 	query.collide_with_areas = true
 	query.exclude = exclude

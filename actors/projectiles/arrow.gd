@@ -37,7 +37,7 @@ func _physics_process(delta: float) -> void:
 		Mode.STUCK:
 			_time_left -= delta
 			if _time_left <= 0.0:
-				expired.emit(self)
+				_expire()
 
 
 ## Fires the arrow from `origin` along `direction` at `speed`. `attack` is the already
@@ -71,10 +71,18 @@ func deactivate() -> void:
 	top_level = true
 
 
+## Asks the pool to recycle the arrow; when nobody does (the pool was replaced or freed)
+## the arrow frees itself so it never lingers in a target.
+func _expire() -> void:
+	expired.emit(self)
+	if mode != Mode.IDLE:
+		queue_free()
+
+
 func _fly(delta: float) -> void:
 	_time_left -= delta
 	if _time_left <= 0.0:
-		expired.emit(self)
+		_expire()
 		return
 	velocity.y -= _gravity * _data.gravity_scale * delta
 	var from: Vector3 = global_position

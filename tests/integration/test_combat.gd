@@ -188,6 +188,34 @@ func test_arrows_stay_attached_to_a_moving_dummy() -> void:
 	assert_almost_eq(stuck.global_position.x - before.x, 2.0, 0.01)
 
 
+func test_stuck_arrow_is_freed_with_a_replaced_pool() -> void:
+	await _spawn_dummy(Vector3(0, 0, -5))
+	_player.bow.begin_draw()
+	_player.bow.draw_time = 1.0
+	var arrow: Arrow = _player.bow.fire(_player, Vector3(0, 0.7, -2), Vector3(0, 0, -1), null)
+	await wait_seconds(0.3)
+	assert_eq(arrow.mode, Arrow.Mode.STUCK)
+	_player.bow.setup(_player.bow.data)  # replaces the pool the arrow came from
+	await wait_physics_frames(2)
+	assert_false(is_instance_valid(arrow), "embedded arrow went with its pool")
+
+
+func test_stuck_arrow_frees_itself_when_nothing_recycles_it() -> void:
+	await _spawn_dummy(Vector3(0, 0, -5))
+	var data: BowData = _player.bow.data.duplicate() as BowData
+	data.stuck_lifetime = 0.8
+	_player.bow.setup(data)
+	_player.bow.begin_draw()
+	_player.bow.draw_time = 1.0
+	var arrow: Arrow = _player.bow.fire(_player, Vector3(0, 0.7, -2), Vector3(0, 0, -1), null)
+	await wait_seconds(0.3)
+	assert_eq(arrow.mode, Arrow.Mode.STUCK)
+	for connection: Dictionary in arrow.expired.get_connections():
+		arrow.expired.disconnect(connection["callable"])  # the pool is gone
+	await wait_seconds(0.9)
+	assert_false(is_instance_valid(arrow), "arrow expired on its own")
+
+
 func test_stuck_arrows_are_capped_and_recycled() -> void:
 	await _spawn_dummy(Vector3(0, 0, -5))
 	var data: BowData = _player.bow.data.duplicate() as BowData

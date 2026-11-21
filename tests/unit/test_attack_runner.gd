@@ -23,6 +23,7 @@ func before_each() -> void:
 	_hitbox = HitboxComponent.new()
 	_hitbox.name = &"Hitbox"
 	_runner = AttackRunner.new()
+	_runner.name = &"AttackRunner"
 	_stamina = StaminaComponent.new()
 	_actor.add_child(_hitbox)
 	_actor.add_child(_runner)
@@ -83,23 +84,63 @@ func test_cancel_closes_the_hit_window() -> void:
 	assert_signal_emitted(_runner, "cancelled")
 
 
-func test_method_track_clip_drives_the_window_instead_of_timings() -> void:
+## Builds a "swing" clip on a new AnimationPlayer. `keys` maps method name to time;
+## the track targets `path` and is `enabled` as given.
+func _make_swing(
+	keys: Dictionary, path: NodePath = ^"AttackRunner", enabled: bool = true
+) -> AnimationPlayer:
 	var player := AnimationPlayer.new()
+	player.callback_mode_method = AnimationMixer.ANIMATION_CALLBACK_MODE_METHOD_IMMEDIATE
 	_actor.add_child(player)
 	var clip := Animation.new()
-	clip.length = 0.3
+	clip.length = 0.4
 	var track: int = clip.add_track(Animation.TYPE_METHOD)
-	clip.track_set_path(track, ^"AttackRunner")
-	clip.track_insert_key(track, 0.05, {"method": &"open_hit_window", "args": []})
+	clip.track_set_path(track, path)
+	clip.track_set_enabled(track, enabled)
+	for method: StringName in keys:
+		clip.track_insert_key(track, keys[method], {"method": method, "args": []})
 	var library := AnimationLibrary.new()
 	library.add_animation(&"swing", clip)
 	player.add_animation_library(&"", library)
 	_runner._animation_player = player
+	_runner.play_animation_directly = true
 	_attack.animation_name = &"swing"
+	return player
+
+
+func test_method_track_clip_drives_open_and_close_of_the_window() -> void:
+	var player: AnimationPlayer = _make_swing({&"open_hit_window": 0.05, &"close_hit_window": 0.2})
 	_runner.start(_attack, _actor, _stamina)
-	_runner.tick(0.2)
+	_runner.tick(0.15)  # timings would have opened the window by now
 	assert_eq(_runner.phase, AttackRunner.Phase.WINDUP, "timings ignored: the track has not fired")
-	_runner.open_hit_window()
+	player.advance(0.1)
+	assert_eq(_runner.phase, AttackRunner.Phase.ACTIVE)
+	assert_true(_hitbox.active)
+	player.advance(0.15)
+	assert_eq(_runner.phase, AttackRunner.Phase.RECOVERY)
+	assert_false(_hitbox.active, "the close key ended the window")
+
+
+func test_open_only_track_falls_back_to_timings() -> void:
+	_make_swing({&"open_hit_window": 0.05})
+	_runner.start(_attack, _actor, _stamina)
+	_runner.tick(0.11)
+	assert_true(_hitbox.active)
+	_runner.tick(0.2)
+	assert_false(_hitbox.active, "fallback timings close the window")
+
+
+func test_disabled_track_falls_back_to_timings() -> void:
+	_make_swing({&"open_hit_window": 0.05, &"close_hit_window": 0.2}, ^"AttackRunner", false)
+	_runner.start(_attack, _actor, _stamina)
+	_runner.tick(0.11)
+	assert_true(_hitbox.active)
+
+
+func test_track_for_another_node_falls_back_to_timings() -> void:
+	_make_swing({&"open_hit_window": 0.05, &"close_hit_window": 0.2}, ^"Elsewhere")
+	_runner.start(_attack, _actor, _stamina)
+	_runner.tick(0.11)
 	assert_true(_hitbox.active)
 
 

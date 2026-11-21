@@ -14,6 +14,14 @@ var _idle: Array = []
 var _stuck: Array = []
 
 
+func _exit_tree() -> void:
+	# Stuck arrows live inside targets, outside this pool's subtree: free them with it.
+	for arrow: Variant in _stuck:
+		if is_instance_valid(arrow):
+			(arrow as Arrow).queue_free()
+	_stuck.clear()
+
+
 ## Prepares the pool from `data` and creates `pool_size` idle arrows.
 func setup(data: BowData) -> void:
 	_data = data

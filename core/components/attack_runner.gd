@@ -150,10 +150,13 @@ func _clip_has_window(clip_name: StringName) -> bool:
 	if not _has_clip(clip_name):
 		return false
 	var clip: Animation = _animation_player.get_animation(clip_name)
+	var root: Node = _animation_player.get_node_or_null(_animation_player.root_node)
+	var found: Dictionary = {}
 	for track: int in clip.get_track_count():
-		if clip.track_get_type(track) != Animation.TYPE_METHOD:
+		if clip.track_get_type(track) != Animation.TYPE_METHOD or not clip.track_is_enabled(track):
+			continue
+		if root == null or root.get_node_or_null(clip.track_get_path(track)) != self:
 			continue
 		for key: int in clip.track_get_key_count(track):
-			if clip.method_track_get_name(track, key) == &"open_hit_window":
-				return true
-	return false
+			found[clip.method_track_get_name(track, key)] = true
+	return found.has(&"open_hit_window") and found.has(&"close_hit_window")
