@@ -7,6 +7,20 @@ extends CharacterBody3D
 ## Facing convention: the body's forward is -Z (Godot default). Put the visual under
 ## `PlayerModel`; a GLB that faces +Z is rotated by PI on that node, never here.
 
+## Scene-tree group the player joins (the mount and the flow controller look it up).
+const GROUP: StringName = &"player"
+
+## Player state name -> animation-tree node; every other state plays `Locomotion`.
+const ANIM_NODES: Dictionary = {
+	&"Dodge": &"Dodge",
+	&"Mounting": &"Ride",
+	&"Mounted": &"Ride",
+	&"MountedSprint": &"Ride",
+	&"MountedAim": &"Ride",
+	&"Dismounting": &"Ride",
+	&"KnockedOff": &"KnockedOff",
+}
+
 ## Stats used by every state; tuned in `player_stats.tres`.
 @export var stats: CharacterStats
 ## Optional camera rig that defines "camera-relative". Falls back to the body's facing.
@@ -18,9 +32,15 @@ extends CharacterBody3D
 
 ## The camera rig movement is relative to, or null.
 var camera: ThirdPersonCamera = null
+## The cat being ridden, or null on foot.
+var mount: CatMount = null
+## Direction (world, horizontal) a knock-off throws the rider; set before `KnockedOff`.
+var knock_off_direction: Vector3 = Vector3.ZERO
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _anim_playback: AnimationNodeStateMachinePlayback = null
+var _saved_collision_layer: int = 0
+var _saved_collision_mask: int = 0
 
 @onready var stamina: StaminaComponent = $Stamina
 @onready var health: HealthComponent = $Health
@@ -35,6 +55,7 @@ var _anim_playback: AnimationNodeStateMachinePlayback = null
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	if stats == null:
 		stats = CharacterStats.new()
 	if not camera_path.is_empty():
@@ -120,7 +141,7 @@ func locomote(desired: Vector3, accel: float, delta: float) -> void:
 	horizontal = horizontal.move_toward(Vector3(desired.x, 0.0, desired.z), accel * delta)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
-	if is_on_floor():
+	if is_on_floor() and velocity.y <= 0.0:
 		velocity.y = 0.0
 	else:
 		velocity.y -= _gravity * delta
@@ -157,7 +178,55 @@ func update_facing(move_direction: Vector3, delta: float, allow_strafe: bool = t
 func stagger() -> void:
 	if health.is_dead():
 		return
+	if mount != null:
+		knock_off(-get_facing())  # a poise break in the saddle throws the rider
+		return
 	state_machine.transition_to(&"Stagger")
+
+
+## The cat to ride or call: the nearest node in the `mount` group, or null.
+func find_mount() -> CatMount:
+	if mount != null:
+		return mount
+	var best: CatMount = null
+	var best_distance: float = INF
+	for node: Node in get_tree().get_nodes_in_group(CatMount.GROUP):
+		var cat := node as CatMount
+		if cat != null:
+			var distance: float = cat.global_position.distance_to(global_position)
+			if distance < best_distance:
+				best = cat
+				best_distance = distance
+	return best
+
+
+## Starts riding `cat`: the body stops colliding (the cat carries it) and the Mounting
+## state blends it onto the saddle. Called by [method CatMount.attach_rider].
+func begin_ride(cat: CatMount) -> void:
+	mount = cat
+	_saved_collision_layer = collision_layer
+	_saved_collision_mask = collision_mask
+	collision_layer = 0
+	collision_mask = 0
+	velocity = Vector3.ZERO
+	state_machine.transition_to(&"Mounting")
+
+
+## Leaves the saddle: collisions return. The caller (dismount or knock-off state) picks
+## the next state. Called by [method CatMount.detach_rider].
+func end_ride() -> void:
+	mount = null
+	collision_layer = _saved_collision_layer
+	collision_mask = _saved_collision_mask
+
+
+## Throws the rider off the cat along `direction` into the KnockedOff stagger.
+## Ignored on foot and for a dead player.
+func knock_off(direction: Vector3) -> void:
+	if mount == null or health.is_dead():
+		return
+	knock_off_direction = direction
+	state_machine.transition_to(&"KnockedOff")
 
 
 ## Fires the drawn arrow from the chest along the camera's aim. Returns the arrow, or
@@ -180,7 +249,9 @@ func _update_locomotion_blend() -> void:
 func _on_state_changed(_from_name: StringName, to_name: StringName) -> void:
 	if _anim_playback == null or to_name == &"AttackLight" or to_name == &"AttackHeavy":
 		return  # the attack runner requests the attack clip itself
-	var target: StringName = &"Dodge" if to_name == &"Dodge" else &"Locomotion"
+	var target: StringName = ANIM_NODES.get(to_name, &"Locomotion")
+	if not (anim_tree.tree_root as AnimationNodeStateMachine).has_node(target):
+		target = &"Locomotion"  # a rig without the clip falls back to locomotion
 	if _anim_playback.get_current_node() == target:
 		return
 	if _anim_playback.get_current_node() == &"Locomotion":
@@ -208,6 +279,8 @@ func _on_died() -> void:
 
 
 func _on_damaged(info: DamageInfo) -> void:
+	if mount != null:
+		return  # the cat carries the rider; knock-off is decided by the mount
 	velocity += info.direction * info.knockback
 
 

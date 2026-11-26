@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/capture/mount_capture_rig.gd" id="1_rig"]
+
+[node name="MountCapture" type="Node"]
+script = ExtResource("1_rig")

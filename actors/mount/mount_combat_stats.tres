@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CombatStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/data/combat_stats.gd" id="1_stats"]
+
+[resource]
+script = ExtResource("1_stats")
+resource_name = "Cat Combat Stats"
+max_health = 120.0
+poise_max = 60.0
+poise_regen_delay = 2.5
+poise_regen_rate = 15.0
+stagger_duration = 0.5
+riposte_duration = 0.0
+riposte_damage_multiplier = 1.0
