@@ -1,0 +1,47 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Environment" path="res://fx/environment/forest_day.tres" id="1_env"]
+[ext_resource type="PackedScene" path="res://assets/characters/gnome_ranger/gnome_ranger.glb" id="2_gnome"]
+[ext_resource type="PackedScene" path="res://assets/characters/cat_mount/cat_mount.glb" id="3_cat"]
+[ext_resource type="Script" path="res://levels/sandbox/mount_showcase.gd" id="4_script"]
+
+[sub_resource type="StandardMaterial3D" id="ground_mat"]
+albedo_color = Color(0.3608, 0.2627, 0.1569, 1)
+roughness = 0.95
+
+[sub_resource type="PlaneMesh" id="ground_mesh"]
+size = Vector2(60, 60)
+
+[node name="MountShowcasePounce" type="Node3D"]
+script = ExtResource("4_script")
+rider_scene = ExtResource("2_gnome")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("1_env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.926, -0.284, 0.25, 0, 0.66, 0.75, -0.379, 0.694, -0.61, 0, 12, 0)
+light_color = Color(1, 0.93, 0.8, 1)
+light_energy = 2.5
+shadow_enabled = true
+directional_shadow_max_distance = 40.0
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+mesh = SubResource("ground_mesh")
+surface_material_override/0 = SubResource("ground_mat")
+
+[node name="CatSlotIdle" parent="." instance=ExtResource("3_cat")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -1.9, 0, 0)
+metadata/clip = "pounce"
+metadata/time = 0.667
+
+[node name="CatSlotGallop" parent="." instance=ExtResource("3_cat")]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 1.9, 0, 0)
+metadata/clip = "pounce"
+metadata/time = 1.033
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9848, 0.1736, 0, -0.1736, 0.9848, 0, 1.8, 6.2)
+current = true
+fov = 50.0
+

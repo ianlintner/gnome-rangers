@@ -99,6 +99,22 @@ Because history counts, a full redo may need a higher `--max-credits`; raise it 
 - **Canceled and failed tasks** are never reused; the next run creates a fresh task (a canceled
   task is counted at its estimate, conservatively).
 
+## Quadrupeds (unrigged assets)
+
+Meshy cannot rig quadrupeds. An asset with `rig: {skeleton_template: none}` stops after the PBR
+refine: `generate <name>` copies the textured mesh to `<output>/source/<name>_source.glb` and
+skips `rig`/`animate`. `tools/blender/rig_cat.py` then rigs and animates it:
+
+```sh
+~/.local/opt/blender/blender -b -P tools/blender/rig_cat.py -- \
+  --in assets/characters/cat_mount/source/cat_mount_source.glb \
+  --out assets/characters/cat_mount/cat_mount.glb
+godot --headless --import --path .
+```
+
+It writes `cat_mount.glb` and `import.json` (clip names/loops, `rim_light`); the `.import` sidecar
+uses `tools/import/humanoid_post_import.gd` (no humanoid BoneMap).
+
 ## Conventions and notes
 
 - **Scale**: 1 unit = 1 m at gnome scale; gnome 1.0 m, Grukk 4.0 m (`height_meters`). Meshy rescales
