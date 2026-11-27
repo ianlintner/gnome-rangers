@@ -11,6 +11,7 @@ extends Node
 
 const LEVEL_SCENE: String = "res://levels/rootfall_hollow/rootfall_hollow.tscn"
 const CHECKPOINT_SCENE: String = "res://levels/checkpoint/checkpoint.tscn"
+const FOG_GATE_SCENE: String = "res://levels/rootfall_hollow/fog_gate.tscn"
 const NAVMESH_PATH: String = "res://levels/rootfall_hollow/navmesh.res"
 const ENVIRONMENT_PATH: String = "res://fx/environment/forest_day.tres"
 const TEXTURES: String = "res://assets/textures/%s/%s_%s.jpg"
@@ -297,31 +298,13 @@ func _add_markers(level: Node3D) -> void:
 
 
 func _add_gate(level: Node3D) -> void:
-	var gate := FogGateTrigger.new()
+	# The fog-gate kit (trigger, fog wall, seals, boss spawn) is its own scene; the level only
+	# places it so its tuning stays in `fog_gate.tscn`.
+	var gate := (load(FOG_GATE_SCENE) as PackedScene).instantiate() as Node3D
 	gate.name = "FogGate"
-	gate.collision_layer = 0
-	gate.collision_mask = 1 << 1  # `player`
 	gate.position = RootfallLayout.GATE_POS
-	_attach(level, gate)
-	var shape := CollisionShape3D.new()
-	shape.name = "Shape"
-	var box := BoxShape3D.new()
-	box.size = Vector3(RootfallLayout.GATE_HALF_WIDTH * 2.0, 6.0, 3.0)
-	shape.shape = box
-	shape.position.y = 3.0
-	gate.add_child(shape)
-	shape.owner = level
-	var fog := FogVolume.new()
-	fog.name = "FogWall"
-	fog.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
-	fog.size = Vector3(RootfallLayout.GATE_HALF_WIDTH * 2.0, 8.0, 3.0)
-	var fog_material := FogMaterial.new()
-	fog_material.albedo = Color(0.78, 0.81, 0.72)
-	fog_material.density = 2.5
-	fog.material = fog_material
-	fog.position.y = 4.0
-	gate.add_child(fog)
-	fog.owner = level
+	level.add_child(gate)
+	gate.owner = level
 
 
 func _bake_navigation(level: Node3D) -> void:

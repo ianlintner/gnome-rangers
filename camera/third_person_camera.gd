@@ -3,6 +3,9 @@ extends Node3D
 ## Orbit camera on a SpringArm3D. Follows `target`, reads mouse and stick look,
 ## collides with the `world` layer and eases into a lock-on framing.
 ##
+## It updates in the physics tick, not per rendered frame: its yaw is the player's movement
+## basis and its ray is the bow's aim, so both must be frame-rate independent.
+##
 ## Look sensitivity and invert-Y are read from `user://settings.cfg` (section
 ## `controls`, keys `look_sensitivity` and `invert_y`) with defaults 1.0 / false;
 ## card 9 owns the settings screen that writes them.
@@ -63,7 +66,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		look(-motion.relative.x * scale_factor, -motion.relative.y * scale_factor)
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if _target != null:
 		var goal: Vector3 = _target.global_position + Vector3.UP * tuning.pivot_height
 		global_position = global_position.lerp(goal, 1.0 - exp(-tuning.follow_smoothing * delta))

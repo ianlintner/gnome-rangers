@@ -53,7 +53,9 @@ var call_target: Node3D = null
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity", 9.8)
 var _call_cooldown_left: float = 0.0
-var _saddle: BoneAttachment3D = null
+var _skeleton: Skeleton3D = null
+## Index of [constant SADDLE_BONE] in [member _skeleton]; -1 without a saddle bone.
+var _saddle_bone: int = -1
 
 @onready var health: HealthComponent = $Health
 @onready var poise: PoiseComponent = $Poise
@@ -73,6 +75,9 @@ func _ready() -> void:
 	if combat_stats == null:
 		combat_stats = CombatStats.new()
 	add_to_group(GROUP)
+	# Tick after the children (state machine, AnimationTree) so the rider is seated on this
+	# tick's body position and saddle pose, not last tick's.
+	process_physics_priority = 10
 	health.apply_stats(combat_stats)
 	poise.apply_stats(combat_stats)
 	health.changed.connect(_on_health_changed)
@@ -92,10 +97,6 @@ func _physics_process(delta: float) -> void:
 	interactable.enabled = is_mountable()
 	animator.set_speed(get_horizontal_speed())
 	_sync_rider()
-
-
-func _process(_delta: float) -> void:
-	_sync_rider()  # the bone moves with the animation, which advances per rendered frame
 
 
 # --- Calling ------------------------------------------------------------------------------
@@ -190,8 +191,10 @@ func seat_transform() -> Transform3D:
 	var anchor: Vector3 = (
 		global_position + basis_yaw * Vector3(0.0, stats.fallback_seat_height, 0.0)
 	)
-	if _saddle != null:
-		anchor = _saddle.global_position
+	if _saddle_bone != -1:
+		# Read the bone pose directly: it is recomputed on demand, so the seat is exact for this
+		# tick whatever the order of deferred skeleton updates and rendered frames.
+		anchor = _skeleton.global_transform * _skeleton.get_bone_global_pose(_saddle_bone).origin
 	return Transform3D(basis_yaw, anchor + basis_yaw * stats.rider_offset)
 
 
@@ -358,10 +361,8 @@ func _setup_saddle() -> void:
 	if skeleton == null or skeleton.find_bone(SADDLE_BONE) == -1:
 		push_warning("CatMount: no saddle bone; seating the rider at the fallback height")
 		return
-	_saddle = BoneAttachment3D.new()
-	_saddle.name = "SaddleAttachment"
-	_saddle.bone_name = SADDLE_BONE
-	skeleton.add_child(_saddle)
+	_skeleton = skeleton
+	_saddle_bone = skeleton.find_bone(SADDLE_BONE)
 
 
 func _find_player() -> Node3D:

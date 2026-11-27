@@ -34,7 +34,7 @@ var _stagger_left: float = 0.0
 var _riposte_left: float = 0.0
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	tick(delta)
 
 

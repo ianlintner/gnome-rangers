@@ -3,8 +3,7 @@ extends GutTest
 ## with a short fade between scenes.
 
 const MAIN: PackedScene = preload("res://main.tscn")
-const HEALTH_SCRIPT: Script = preload("res://core/components/health_component.gd")
-const STAMINA_SCRIPT: Script = preload("res://core/components/stamina_component.gd")
+const PLAYER: PackedScene = preload("res://actors/player/player.tscn")
 
 var _main: Node = null
 
@@ -21,23 +20,16 @@ func after_each() -> void:
 	GameState.clear()
 
 
+## A minimal level holding the real player scene, drained so a respawn has work to do.
 func _make_level() -> Node3D:
 	var level := Node3D.new()
 	level.name = "Level"
-	var player := Node3D.new()
+	var player: Player = PLAYER.instantiate() as Player
 	player.name = "Player"
-	player.add_to_group(&"player")
-	var health: Node = HEALTH_SCRIPT.new()
-	health.name = "HealthComponent"
-	health.max_health = 100.0
-	health.current = 20.0
-	player.add_child(health)
-	var stamina: Node = STAMINA_SCRIPT.new()
-	stamina.name = "StaminaComponent"
-	stamina.current = 0.0
-	player.add_child(stamina)
 	level.add_child(player)
 	_main.install_level(level)
+	player.health.take_damage(80.0)
+	player.stamina.try_spend(player.stamina.current)
 	return level
 
 
@@ -104,15 +96,15 @@ func test_death_screen_appears_on_player_died() -> void:
 func test_respawn_refills_player_and_emits_boss_reset() -> void:
 	_main.start_new_game()
 	var level: Node3D = _make_level()
-	var player: Node = level.get_node("Player")
+	var player: Player = level.get_node("Player") as Player
 	_main.on_player_died()
 	watch_signals(EventBus)
 	watch_signals(GameState)
 	var token_before: int = GameState.reset_token
 	_main.respawn()
 	assert_eq(_main.state_name(), &"playing")
-	assert_eq((player.get_node("HealthComponent") as HealthComponent).current, 100.0)
-	assert_gt((player.get_node("StaminaComponent") as StaminaComponent).current, 0.0)
+	assert_eq(player.health.current, player.health.max_health)
+	assert_eq(player.stamina.current, player.stamina.max_stamina)
 	assert_eq(GameState.reset_token, token_before + 1)
 	assert_signal_emitted(GameState, "run_reset")
 	assert_signal_emitted(EventBus, "player_respawned")
@@ -123,7 +115,7 @@ func test_respawn_revives_player_state_machine() -> void:
 	# bring it back to Idle, not just refill its pools.
 	var level: Node3D = Node3D.new()
 	level.name = "Level"
-	var player: Node = preload("res://actors/player/player.tscn").instantiate()
+	var player: Node = PLAYER.instantiate()
 	player.name = "Player"
 	level.add_child(player)
 	_main.install_level(level)

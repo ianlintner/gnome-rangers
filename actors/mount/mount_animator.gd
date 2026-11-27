@@ -51,6 +51,9 @@ func setup(model: Node, stats: MountStats) -> void:
 		_nodes[node_name] = true
 	tree = AnimationTree.new()
 	tree.name = "AnimationTree"
+	# The rider sits on the saddle bone, so the pose must advance with the physics tick (not
+	# per rendered frame) for the seat, and every fight, to be frame-rate independent.
+	tree.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_PHYSICS
 	model.add_child(tree)
 	tree.tree_root = root
 	tree.anim_player = tree.get_path_to(player)

@@ -9,6 +9,7 @@
 script = ExtResource("1_rig")
 
 [node name="Level" parent="." instance=ExtResource("2_level")]
+spawn_actors = false
 
 [node name="Actors" type="Node3D" parent="."]
 

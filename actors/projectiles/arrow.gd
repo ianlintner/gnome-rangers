@@ -55,6 +55,7 @@ func launch(
 	hitbox.faction = faction
 	hitbox.damage_type = &"arrow"
 	hitbox.configure(attack, shooter, 0.0, false)
+	hitbox.clear_hits()  # a recycled arrow must be able to hit its previous target again
 	top_level = true
 	global_position = origin
 	velocity = direction.normalized() * speed
