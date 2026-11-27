@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b86jhfmsv27a"
-path="res://.godot/imported/final_victory.png-a0cd145bc69a70b3492d22a673b6fa1e.ctex"
+uid="uid://wuasxqllykk8"
+path="res://.godot/imported/fog_gate_prompt.png-6b5d14db7f4710b1f458b58ba8603b1a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/captures/final_victory.png"
-dest_files=["res://.godot/imported/final_victory.png-a0cd145bc69a70b3492d22a673b6fa1e.ctex"]
+source_file="res://docs/captures/next/fog_gate_prompt.png"
+dest_files=["res://.godot/imported/fog_gate_prompt.png-6b5d14db7f4710b1f458b58ba8603b1a.ctex"]
 
 [params]
 

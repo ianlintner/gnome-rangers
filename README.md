@@ -76,13 +76,14 @@ godot --path .                                       # run the project (opens th
 godot --headless --quit --path .                     # parse check
 
 godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests -gexit   # tests (GUT)
+tools/test.sh                                         # --import, then the GUT command; exits with GUT status
 gdlint . && gdformat --check .                       # lint and format check (addons/ excluded)
 gdformat .                                           # apply formatting
 
 tools/capture/capture.sh levels/sandbox/sandbox.tscn /tmp/sandbox.png [--camera <NodePath>] [--frames N]
 tools/capture/rootfall.sh [out_dir]                  # the three fixed Rootfall Hollow captures
 tools/capture/perf.sh [--tier high|dev] [--seconds N] [--out log.txt]   # fly-through fps log
-tools/capture/final_slice.sh                         # MVP screenshots -> docs/captures/final_*.png
+tools/capture/game.sh [--shots a,b] [--out DIR]       # real main.tscn shots, 1280x720 -> ~/lab/artifacts/playable-sweep/gnome-rangers/next/
 tools/capture/fight_perf.sh                         # full-fight fps log -> docs/perf/final_fight_fps.txt
 ```
 

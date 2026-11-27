@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://mqsq4ly7u6ge"
-path="res://.godot/imported/final_boss_phase2.png-b203cef96722b5175acd079ee2b40ecc.ctex"
+uid="uid://854qfq0t4eu"
+path="res://.godot/imported/victory.png-da412281e3f2974b98cf006c6ecdc8f2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/captures/final_boss_phase2.png"
-dest_files=["res://.godot/imported/final_boss_phase2.png-b203cef96722b5175acd079ee2b40ecc.ctex"]
+source_file="res://docs/captures/next/victory.png"
+dest_files=["res://.godot/imported/victory.png-da412281e3f2974b98cf006c6ecdc8f2.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://djovxw74dugch"
-path="res://.godot/imported/final_checkpoint.png-0c5c87755998ffb30d0738ca6c28e8bd.ctex"
+uid="uid://b4fvcyf22vdy7"
+path="res://.godot/imported/death_world_behind.png-64619efe03b6206ee07e7eb0a843dc58.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/captures/final_checkpoint.png"
-dest_files=["res://.godot/imported/final_checkpoint.png-0c5c87755998ffb30d0738ca6c28e8bd.ctex"]
+source_file="res://docs/captures/next/death_world_behind.png"
+dest_files=["res://.godot/imported/death_world_behind.png-64619efe03b6206ee07e7eb0a843dc58.ctex"]
 
 [params]
 

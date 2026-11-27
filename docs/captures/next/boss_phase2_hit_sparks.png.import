@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b61blyxfttcwr"
-path="res://.godot/imported/final_mounted_approach.png-dd46370558409b3578c72f2f70f813f6.ctex"
+uid="uid://8maryrogb4s8"
+path="res://.godot/imported/boss_phase2_hit_sparks.png-5a3968ee72d0aecf05b41b439d414a02.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://docs/captures/final_mounted_approach.png"
-dest_files=["res://.godot/imported/final_mounted_approach.png-dd46370558409b3578c72f2f70f813f6.ctex"]
+source_file="res://docs/captures/next/boss_phase2_hit_sparks.png"
+dest_files=["res://.godot/imported/boss_phase2_hit_sparks.png-5a3968ee72d0aecf05b41b439d414a02.ctex"]
 
 [params]
 
