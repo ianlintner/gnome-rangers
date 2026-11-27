@@ -1,5 +1,8 @@
 extends GutTest
 ## The real-game capture registry lists the documented shots and every entry is runnable.
+## The driver is bound by path, not by a global class_name: it is a tool, not test plumbing.
+
+const GameCapture: Script = preload("res://tools/capture/game_capture.gd")
 
 const REQUIRED: Array[StringName] = [
 	&"title_backdrop",
@@ -19,7 +22,7 @@ func test_registry_has_required_shots() -> void:
 
 
 func test_every_entry_resolves_to_a_method() -> void:
-	var driver := GameCapture.new()
+	var driver: Node = GameCapture.new()
 	for shot_name: StringName in GameCapture.SHOTS.keys():
 		var method: StringName = GameCapture.SHOTS[shot_name] as StringName
 		assert_true(driver.has_method(method), "%s -> %s exists" % [shot_name, method])
@@ -28,5 +31,6 @@ func test_every_entry_resolves_to_a_method() -> void:
 
 
 func test_unknown_shots_are_reported() -> void:
-	var unknown: Array[StringName] = GameCapture.unknown_shots([&"victory", &"nope"])
+	var names: Array[StringName] = [&"victory", &"nope"]
+	var unknown: Array[StringName] = GameCapture.unknown_shots(names)
 	assert_eq(unknown, [&"nope"] as Array[StringName])

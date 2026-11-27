@@ -1,4 +1,3 @@
-class_name GameCapture
 extends Node
 ## Real-game capture driver: boots `res://main.tscn` in a fixed 1280x720 SubViewport (so output
 ## is independent of the window manager) and saves one PNG per requested shot.
@@ -52,7 +51,9 @@ func _ready() -> void:
 	if _requested.is_empty():
 		for key: StringName in SHOTS.keys():
 			_requested.append(key)
-	_out_dir = _out_dir.replace("~", OS.get_environment("HOME"))
+	# Expand only a leading '~': literal tildes elsewhere in a path are meaningful.
+	if _out_dir.begins_with("~"):
+		_out_dir = OS.get_environment("HOME") + _out_dir.substr(1)
 	DirAccess.make_dir_recursive_absolute(_out_dir)
 	_run()
 
