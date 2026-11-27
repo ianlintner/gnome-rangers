@@ -1,0 +1,109 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://actors/mount/cat_mount.gd" id="script"]
+[ext_resource type="Resource" path="res://actors/mount/mount_stats.tres" id="stats"]
+[ext_resource type="Resource" path="res://actors/mount/mount_combat_stats.tres" id="combat"]
+[ext_resource type="PackedScene" path="res://assets/characters/cat_mount/cat_mount.glb" id="model"]
+[ext_resource type="Script" path="res://core/components/health_component.gd" id="health"]
+[ext_resource type="Script" path="res://core/components/poise_component.gd" id="poise"]
+[ext_resource type="Script" path="res://core/components/hurtbox_component.gd" id="hurtbox"]
+[ext_resource type="Script" path="res://core/components/hitbox_component.gd" id="hitbox"]
+[ext_resource type="Script" path="res://core/components/attack_runner.gd" id="runner"]
+[ext_resource type="Script" path="res://core/components/interactable.gd" id="interactable"]
+[ext_resource type="Script" path="res://actors/mount/mount_animator.gd" id="animator"]
+[ext_resource type="Script" path="res://core/state_machine/state_machine.gd" id="sm"]
+[ext_resource type="Script" path="res://actors/mount/states/idle_state.gd" id="st_idle"]
+[ext_resource type="Script" path="res://actors/mount/states/called_state.gd" id="st_called"]
+[ext_resource type="Script" path="res://actors/mount/states/ridden_state.gd" id="st_ridden"]
+[ext_resource type="Script" path="res://actors/mount/states/gallop_state.gd" id="st_gallop"]
+[ext_resource type="Script" path="res://actors/mount/states/pounce_state.gd" id="st_pounce"]
+[ext_resource type="Script" path="res://actors/mount/states/hurt_state.gd" id="st_hurt"]
+[ext_resource type="Script" path="res://actors/mount/states/flee_state.gd" id="st_flee"]
+
+[sub_resource type="CapsuleShape3D" id="body_shape"]
+radius = 0.3
+height = 0.9
+
+[sub_resource type="BoxShape3D" id="hurt_shape"]
+size = Vector3(0.6, 0.9, 1.3)
+
+[sub_resource type="SphereShape3D" id="interact_shape"]
+radius = 1.4
+
+[node name="CatMount" type="CharacterBody3D"]
+collision_layer = 8
+collision_mask = 5
+floor_snap_length = 0.3
+script = ExtResource("script")
+stats = ExtResource("stats")
+combat_stats = ExtResource("combat")
+
+[node name="Model" parent="." instance=ExtResource("model")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("body_shape")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("health")
+
+[node name="Poise" type="Node" parent="."]
+script = ExtResource("poise")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+script = ExtResource("hurtbox")
+faction = &"player"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("hurt_shape")
+
+[node name="Hitbox" type="Area3D" parent="."]
+script = ExtResource("hitbox")
+faction = &"player"
+damage_type = &"pounce"
+
+[node name="AttackRunner" type="Node" parent="."]
+script = ExtResource("runner")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.6
+target_desired_distance = 1.0
+radius = 0.4
+height = 0.9
+
+[node name="Interactable" type="Area3D" parent="."]
+script = ExtResource("interactable")
+prompt_text = "Mount"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Interactable"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("interact_shape")
+
+[node name="MountAnimator" type="Node" parent="."]
+script = ExtResource("animator")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("sm")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("st_idle")
+
+[node name="Called" type="Node" parent="StateMachine"]
+script = ExtResource("st_called")
+
+[node name="Ridden" type="Node" parent="StateMachine"]
+script = ExtResource("st_ridden")
+
+[node name="Gallop" type="Node" parent="StateMachine"]
+script = ExtResource("st_gallop")
+
+[node name="Pounce" type="Node" parent="StateMachine"]
+script = ExtResource("st_pounce")
+
+[node name="Hurt" type="Node" parent="StateMachine"]
+script = ExtResource("st_hurt")
+
+[node name="Flee" type="Node" parent="StateMachine"]
+script = ExtResource("st_flee")

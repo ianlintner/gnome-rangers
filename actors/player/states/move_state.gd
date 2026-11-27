@@ -7,7 +7,7 @@ func physics_update(delta: float) -> void:
 	var direction: Vector3 = player.get_move_direction()
 	player.locomote(direction * player.stats.move_speed, player.stats.acceleration, delta)
 	player.update_facing(direction, delta)
-	if try_fall() or try_dodge() or try_combat():
+	if try_fall() or try_dodge() or try_mount_actions() or try_combat():
 		return
 	if wants_sprint():
 		state_machine.transition_to(&"Sprint")

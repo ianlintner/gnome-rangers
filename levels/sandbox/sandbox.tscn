@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://actors/player/player.tscn" id="3_player"]
 [ext_resource type="PackedScene" path="res://camera/third_person_camera.tscn" id="4_cam"]
 [ext_resource type="PackedScene" path="res://actors/enemies/training_dummy/training_dummy.tscn" id="5_dummy"]
+[ext_resource type="PackedScene" path="res://actors/mount/cat_mount.tscn" id="6_cat"]
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
 albedo_color = Color(0.3608, 0.2627, 0.1569, 1)
@@ -100,6 +101,9 @@ fov = 55.0
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 camera_path = NodePath("../ThirdPersonCamera")
+
+[node name="CatMount" parent="." instance=ExtResource("6_cat")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.2, 0, 0.4)
 
 [node name="ThirdPersonCamera" parent="." instance=ExtResource("4_cam")]
 target_path = NodePath("../Player")

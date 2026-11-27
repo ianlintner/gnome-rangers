@@ -46,6 +46,29 @@ func try_combat() -> bool:
 	return try_aim() or try_attack_heavy() or try_attack_light()
 
 
+## Mounts the nearest cat in range when `interact` is pressed (through its Interactable).
+func try_mount() -> bool:
+	if not Input.is_action_just_pressed(&"interact"):
+		return false
+	var cat: CatMount = player.find_mount()
+	if cat == null or not cat.can_be_mounted_by(player):
+		return false
+	return cat.interactable.interact(player)
+
+
+## Whistles the cat over when `call_mount` is pressed.
+func try_call_mount() -> bool:
+	if not Input.is_action_just_pressed(&"call_mount"):
+		return false
+	var cat: CatMount = player.find_mount()
+	return cat != null and cat.call_to(player)
+
+
+## Mount-related inputs available on foot: mount first, then call.
+func try_mount_actions() -> bool:
+	return try_mount() or try_call_mount()
+
+
 ## Moves to Fall when the body has left the ground.
 func try_fall() -> bool:
 	if player.is_on_floor():

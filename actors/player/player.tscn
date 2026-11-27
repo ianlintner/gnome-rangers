@@ -24,6 +24,12 @@
 [ext_resource type="Resource" path="res://actors/player/player_combat_stats.tres" id="22_combat"]
 [ext_resource type="Resource" path="res://actors/player/player_moveset.tres" id="23_moveset"]
 [ext_resource type="Resource" path="res://actors/player/player_bow.tres" id="24_bow"]
+[ext_resource type="Script" path="res://actors/player/states/mounting_state.gd" id="m_Mounting"]
+[ext_resource type="Script" path="res://actors/player/states/mounted_move_state.gd" id="m_Mounted"]
+[ext_resource type="Script" path="res://actors/player/states/mounted_sprint_state.gd" id="m_MountedSprint"]
+[ext_resource type="Script" path="res://actors/player/states/mounted_aim_state.gd" id="m_MountedAim"]
+[ext_resource type="Script" path="res://actors/player/states/dismounting_state.gd" id="m_Dismounting"]
+[ext_resource type="Script" path="res://actors/player/states/knocked_off_state.gd" id="m_KnockedOff"]
 
 [sub_resource type="CapsuleShape3D" id="body_shape"]
 radius = 0.3
@@ -56,6 +62,15 @@ loop_mode = 1
 resource_name = "dodge_roll"
 length = 0.6
 
+[sub_resource type="Animation" id="anim_ride"]
+resource_name = "ride"
+length = 1.0
+loop_mode = 1
+
+[sub_resource type="Animation" id="anim_knocked_off"]
+resource_name = "knocked_off"
+length = 1.2
+
 [sub_resource type="Animation" id="anim_light_1"]
 resource_name = "attack_light_1"
 length = 0.47
@@ -80,6 +95,8 @@ _data = {
 &"attack_light_3": SubResource("anim_light_3"),
 &"dodge_roll": SubResource("anim_dodge"),
 &"idle": SubResource("anim_idle"),
+&"knocked_off": SubResource("anim_knocked_off"),
+&"ride": SubResource("anim_ride"),
 &"run": SubResource("anim_run"),
 &"walk": SubResource("anim_walk")
 }
@@ -133,6 +150,20 @@ max_space = Vector2(1, 1)
 [sub_resource type="AnimationNodeAnimation" id="node_dodge"]
 animation = &"dodge_roll"
 
+[sub_resource type="AnimationNodeAnimation" id="node_ride"]
+animation = &"ride"
+
+[sub_resource type="AnimationNodeAnimation" id="node_knocked_off"]
+animation = &"knocked_off"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_to_ride"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_from_ride"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_to_knocked"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="t_from_knocked"]
+
 [sub_resource type="AnimationNodeStateMachineTransition" id="t_start"]
 advance_mode = 2
 
@@ -149,11 +180,15 @@ states/attack_light_2/node = SubResource("node_light_2")
 states/attack_light_2/position = Vector2(533, 250)
 states/attack_light_3/node = SubResource("node_light_3")
 states/attack_light_3/position = Vector2(666, 250)
+states/KnockedOff/node = SubResource("node_knocked_off")
+states/KnockedOff/position = Vector2(600, 400)
+states/Ride/node = SubResource("node_ride")
+states/Ride/position = Vector2(400, 400)
 states/Dodge/node = SubResource("node_dodge")
 states/Dodge/position = Vector2(600, 100)
 states/Locomotion/node = SubResource("locomotion")
 states/Locomotion/position = Vector2(400, 100)
-transitions = ["Start", "Locomotion", SubResource("t_start"), "Locomotion", "Dodge", SubResource("t_to_dodge"), "Dodge", "Locomotion", SubResource("t_from_dodge")]
+transitions = ["Start", "Locomotion", SubResource("t_start"), "Locomotion", "Dodge", SubResource("t_to_dodge"), "Dodge", "Locomotion", SubResource("t_from_dodge"), "Locomotion", "Ride", SubResource("t_to_ride"), "Ride", "Locomotion", SubResource("t_from_ride"), "Locomotion", "KnockedOff", SubResource("t_to_knocked"), "KnockedOff", "Locomotion", SubResource("t_from_knocked")]
 graph_offset = Vector2(0, 0)
 
 [node name="Player" type="CharacterBody3D"]
@@ -248,3 +283,21 @@ script = ExtResource("20_aim")
 
 [node name="Dead" type="Node" parent="StateMachine"]
 script = ExtResource("21_dead")
+
+[node name="Mounting" type="Node" parent="StateMachine"]
+script = ExtResource("m_Mounting")
+
+[node name="Mounted" type="Node" parent="StateMachine"]
+script = ExtResource("m_Mounted")
+
+[node name="MountedSprint" type="Node" parent="StateMachine"]
+script = ExtResource("m_MountedSprint")
+
+[node name="MountedAim" type="Node" parent="StateMachine"]
+script = ExtResource("m_MountedAim")
+
+[node name="Dismounting" type="Node" parent="StateMachine"]
+script = ExtResource("m_Dismounting")
+
+[node name="KnockedOff" type="Node" parent="StateMachine"]
+script = ExtResource("m_KnockedOff")
