@@ -34,10 +34,10 @@ var _requested: Array[StringName] = []
 var _viewport: SubViewport = null
 var _game: GameFlow = null
 var _failed: bool = false
-var _hit_phase2: bool = false
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var i: int = 0
 	while i < args.size():
@@ -77,6 +77,7 @@ func _run() -> void:
 		await call(SHOTS[shot_name] as StringName)
 		BotClock.restore()
 		await _write(shot_name)
+		get_tree().paused = false
 		_game.free()
 		_game = null
 		_viewport.free()
@@ -158,6 +159,12 @@ func _until(done: Callable, what: String) -> bool:
 	return true
 
 
+## Releases the bot's controls and parks it, so it no longer steers, dismounts or fights.
+func _hold_bot(bot: FightBot) -> void:
+	bot.stage = FightBot.Stage.DONE
+	BotInput.release_all()
+
+
 # --- Shots ------------------------------------------------------------------------------------
 
 
@@ -181,33 +188,105 @@ func _shot_on_foot_explore() -> void:
 func _shot_mounted_gallop_gnome() -> void:
 	var bot: FightBot = await _start_bot(FightBot.Plan.MOUNTED)
 	await _until(
-		func() -> bool: return bot.stage == FightBot.Stage.TRAVEL and bot.player.mount != null,
-		"rider to be mounted"
+		func() -> bool:
+			return (
+				bot.stage == FightBot.Stage.TRAVEL
+				and bot.cat.rider == bot.player
+				and bot.cat.rider_seated
+			),
+		"rider to be seated"
 	)
 	await _frames(180)
+	# Freeze the bot (hands off, still in the saddle) so nothing dismounts it before the frame.
+	_hold_bot(bot)
 	BotClock.restore()
-	await _frames(2)
+	var player: Player = bot.player
+	# Look back along the cat's flank so the rider on its back is in frame.
+	player.camera.lock_target = null
+	player.camera.yaw = bot.cat.rotation.y + deg_to_rad(40.0)
+	await _frames(30)
+	print(
+		(
+			(
+				"game_capture.gd: mounted: player.mount=%s cat.rider_is_player=%s seated=%s "
+				+ "player.visible=%s scale=%s cam_yaw=%.2f cat_yaw=%.2f"
+			)
+			% [
+				player.mount,
+				bot.cat.rider == player,
+				bot.cat.rider_seated,
+				player.visible,
+				player.scale,
+				player.camera.yaw,
+				bot.cat.rotation.y
+			]
+		)
+	)
 
 
 func _shot_fog_gate_prompt() -> void:
 	var bot: FightBot = await _start_bot(FightBot.Plan.MOUNTED)
 	await _until(func() -> bool: return bot.level.fog_gate.is_sealed(), "the fog gate to seal")
+	_hold_bot(bot)
 	BotClock.restore()
+	var gate: Node3D = bot.level.fog_gate
+	var player: Player = bot.player
+	player.lock_selector.release()
+	player.camera.lock_target = null
 	await _frames(2)
+	var to_gate: Vector3 = gate.global_position - player.global_position
+	player.camera.yaw = atan2(-to_gate.x, -to_gate.z)
+	player.camera.pitch = deg_to_rad(-6.0)
+	await _frames(30)
+	print(
+		(
+			(
+				"game_capture.gd: gate: sealed=%s gate_dist=%.1f cam_yaw=%.2f want_yaw=%.2f "
+				+ "lock=%s player_dead=%s"
+			)
+			% [
+				gate.is_sealed(),
+				to_gate.length(),
+				player.camera.yaw,
+				atan2(-to_gate.x, -to_gate.z),
+				player.lock_selector.current_target,
+				player.health.is_dead()
+			]
+		)
+	)
 
 
 func _shot_boss_phase2_hit_sparks() -> void:
 	var bot: FightBot = await _start_bot(FightBot.Plan.ON_FOOT)
-	_hit_phase2 = false
+	var landed: Array[bool] = [false]
 	var on_hit := func(info: DamageInfo) -> void:
-		if info.source == bot.player and bot.boss.phase_controller.phase >= 2:
-			_hit_phase2 = true
+		if landed[0] or info.source != bot.player or bot.boss.health.is_dead():
+			return
+		if bot.boss.phase_controller.phase < 2 or bot.player.health.is_dead():
+			return
+		# Freeze at the hit itself: fast-forward runs many ticks per frame, and a later tick could
+		# kill the player (arena reset) or finish the boss before the frame is drawn.
+		landed[0] = true
+		BotClock.restore()
+		get_tree().paused = true
+		print(
+			(
+				"game_capture.gd: hit: phase=%d boss_hp=%.2f hit_pos=%s bot_stage=%s type=%s"
+				% [
+					bot.boss.phase_controller.phase,
+					bot.boss.health.current / bot.boss.health.max_health,
+					info.hit_position,
+					FightBot.Stage.keys()[bot.stage],
+					info.damage_type
+				]
+			)
+		)
 	EventBus.hit_feedback.connect(on_hit)
-	await _until(func() -> bool: return _hit_phase2, "a landed hit in phase 2")
+	await _until(func() -> bool: return landed[0], "a landed hit in phase 2")
 	EventBus.hit_feedback.disconnect(on_hit)
-	BotClock.restore()
-	# One frame on: the spark burst spawned by the hit is on screen.
-	await _frames(1)
+	# The tree stays paused: the frame is the one right after the hit.
+	await get_tree().process_frame
+	await get_tree().process_frame
 
 
 func _shot_death_world_behind() -> void:
