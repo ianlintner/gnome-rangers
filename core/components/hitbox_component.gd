@@ -42,7 +42,11 @@ func _physics_process(_delta: float) -> void:
 	if not active:
 		return
 	var best: Dictionary = {}
-	for area: Area3D in get_overlapping_areas():
+	# The physics server reports overlaps in no fixed order; apply hits in scene-path order so a
+	# swing that catches several actors at once (a cat and its rider) resolves the same each run.
+	var areas: Array[Area3D] = get_overlapping_areas()
+	areas.sort_custom(_by_path)
+	for area: Area3D in areas:
 		var hurtbox := area as HurtboxComponent
 		if hurtbox == null or hurtbox.faction == faction or hurtbox.actor == attacker:
 			continue
@@ -53,6 +57,10 @@ func _physics_process(_delta: float) -> void:
 			best[hurtbox.actor] = hurtbox
 	for hurtbox: HurtboxComponent in best.values():
 		apply_to(hurtbox, hurtbox.global_position)
+
+
+static func _by_path(a: Node, b: Node) -> bool:
+	return String(a.get_path()) < String(b.get_path())
 
 
 ## Binds the attack and attacker. With `build_shape` the Area3D volume is rebuilt from
@@ -72,7 +80,13 @@ func set_active(value: bool) -> void:
 	active = value
 	monitoring = value
 	if value:
-		_hit_actors.clear()
+		clear_hits()
+
+
+## Forgets who was hit, so every target may be hit again. Pooled projectiles call this on
+## every launch; opening a hit window does it implicitly.
+func clear_hits() -> void:
+	_hit_actors.clear()
 
 
 ## Applies the bound attack to `hurtbox` unless its actor was already hit this swing.

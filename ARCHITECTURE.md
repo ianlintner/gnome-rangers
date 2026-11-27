@@ -96,3 +96,50 @@ captures produced by `tools/capture/`.
   Aim state publishes `EventBus.aim_changed` / `bow_draw_changed` for the camera and HUD.
 - **EventBus.** `damage_dealt`, `actor_died`, `actor_staggered`, `hit_feedback(DamageInfo)`
   (VFX and SFX hook).
+
+## Module map (what is where today)
+
+- `main.tscn` / `main.gd`: scene-flow controller (title, gameplay, pause, settings, death,
+  victory). The level is a separate scene under `LevelHost`.
+- `autoload/`: `EventBus` (typed cross-system signals) and `GameState` (checkpoint, run reset).
+- `actors/player/`: `Player` (CharacterBody3D), its states, `LockOnSelector`, moveset and stats `.tres`.
+- `actors/mount/`: `CatMount`, mount states, pounce attack, `MountStats`.
+- `actors/bosses/boss_base/`: reusable boss: `BossBase`, `BossBrain` (weighted move choice),
+  `BossPhaseController`, boss states, `BossMoveData`, `BossPhaseData`.
+- `actors/bosses/orc_brute/`: Grukk: scene, `grukk.gd` (presentation only), stats, moves, phases.
+- `actors/projectiles/`: `Arrow`, `ArrowPool`. `actors/enemies/`: the training dummy.
+- `core/components/`, `core/data/`, `core/state_machine/`, `core/combat/`: shared components,
+  Resource types, state machine, hit-stop.
+- `camera/`: third-person orbit camera with lock-on and aim modes.
+- `levels/rootfall_hollow/`: the level, `FogGate` (boss spawn, engage, seal, reset),
+  layout and foliage scatter. `levels/checkpoint/`, `levels/sandbox/`.
+- `ui/hud/`, `ui/menus/`, `ui/theme/`: HUD (signal-driven), menus, theme and `Palette`.
+- `fx/`: shared environment, shaders, materials.
+- `tools/`: capture, perf, Meshy, Blender, level building. `tests/`: unit, integration, helpers
+  (the `FightBot` and its tactics).
+
+## Adding a new boss
+
+You do not need to read the orc code; `BossBase` does the work and a boss is data plus a scene.
+
+1. **Moves:** create `actors/bosses/<name>/attacks/*.tres` (`AttackData`: damage, poise, windup,
+   active, recovery, hitbox shape, animation) and `moves/*.tres` (`BossMoveData`: `min_range`,
+   `max_range`, `weight`, `cooldown`, `attack`, optional `followup_attack`).
+2. **Stats and phases:** add a `CombatStats` `.tres` (health, poise) and one `BossPhaseData`
+   `.tres` per extra phase (health threshold, extra moves, speed and recovery multipliers).
+3. **Scene:** duplicate `actors/bosses/orc_brute/grukk.tscn` into `actors/bosses/<name>/<name>.tscn`.
+   Swap the model, hurtboxes (set `damage_multiplier` for weak points) and hitbox shapes, then
+   assign `stats`, `base_moves`, `phases` and the brain's `moves`. The root script is `BossBase`,
+   or a thin subclass for presentation only (`class_name` in its own file).
+4. **Animations:** the model's `AnimationPlayer` needs the clips named by your `AttackData`
+   plus idle, walk, hit and death. Hit windows come from the data timings or from
+   `open_hit_window` / `close_hit_window` call-method tracks.
+5. **Arena:** put a `FogGate` (`levels/rootfall_hollow/fog_gate.tscn`) in the level, set its
+   `boss_scene`, and the gate spawns, engages, seals, resets on player death and reopens on
+   defeat. The HUD boss bar shows the boss node's name, so name the node accordingly.
+6. **Tests:** copy `tests/integration/test_grukk.gd` (framework behaviour) and add a
+   bot-fight test; extend `FightBot` tactics only if the boss needs new telegraph handling
+   (`tests/helpers/bot_threat.gd`).
+7. **Gates:** run the commands in "Testing and checks" above and attach captures.
+
+New cross-system events go on `EventBus`, never as direct references from the boss to the HUD.

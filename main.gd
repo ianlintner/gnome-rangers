@@ -118,7 +118,10 @@ func _clear_menu() -> void:
 	if _menu != null:
 		if _menu.menu_action.is_connected(_on_menu_action):
 			_menu.menu_action.disconnect(_on_menu_action)
-		_menu.free()
+		# The menu may be mid-emit (its own button chose this action), so it cannot be freed
+		# now; take it out of the tree at once and free it at the end of the frame.
+		_menu_host.remove_child(_menu)
+		_menu.queue_free()
 		_menu = null
 
 
@@ -281,57 +284,23 @@ func _on_boss_defeated(_boss: Node) -> void:
 
 func respawn() -> void:
 	GameState.reset_run()
-	var player: Node = _find_player()
+	var player: Player = _find_player()
 	if player != null:
-		var transform: Transform3D = GameState.respawn_transform_for_player()
-		if player is Node3D:
-			(player as Node3D).global_transform = transform
-		_refill_health(player)
-		_refill_stamina(player)
+		player.global_transform = GameState.respawn_transform_for_player()
+		player.velocity = Vector3.ZERO
+		player.restore_vitals()
 	EventBus.player_respawned.emit()
 	_begin_play()
 
 
-## The real Player scene names its components Health/Stamina; older fixtures use
-## HealthComponent/StaminaComponent. Accept both so respawn works everywhere.
-func _find_component(actor: Node, names: Array[StringName]) -> Node:
-	for component_name: StringName in names:
-		var component: Node = actor.get_node_or_null(NodePath(component_name))
-		if component != null:
-			return component
-	return null
-
-
-func _refill_health(actor: Node) -> void:
-	var component: Node = _find_component(actor, [&"Health", &"HealthComponent"])
-	if component is HealthComponent:
-		(component as HealthComponent).reset()  # documented refill API; emits changed
-		return
-	_refill_pool(component, &"max_health")
-
-
-func _refill_stamina(actor: Node) -> void:
-	_refill_pool(_find_component(actor, [&"Stamina", &"StaminaComponent"]), &"max_stamina")
-
-
-## Generic fallback for fixtures that only expose `current`/`max_*` properties.
-func _refill_pool(component: Node, max_property: StringName) -> void:
-	if component == null or not (&"current" in component) or not (max_property in component):
-		return
-	var maximum: float = float(component.get(max_property))
-	component.set(&"current", maximum)
-	if component.has_signal(&"changed"):
-		component.emit_signal(&"changed", maximum, maximum)
-
-
-func _find_player() -> Node:
+## The level's player: its `Player` child, else the first node in the player group.
+func _find_player() -> Player:
 	if _level == null:
 		return null
-	var direct: Node = _level.get_node_or_null(NodePath("Player"))
+	var direct := _level.get_node_or_null(^"Player") as Player
 	if direct != null:
 		return direct
-	var group: Array[Node] = get_tree().get_nodes_in_group(&"player")
-	return group[0] if not group.is_empty() else null
+	return get_tree().get_first_node_in_group(Player.GROUP) as Player
 
 
 func quit_to_title() -> void:

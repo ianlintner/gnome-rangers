@@ -64,9 +64,17 @@ func try_call_mount() -> bool:
 	return cat != null and cat.call_to(player)
 
 
-## Mount-related inputs available on foot: mount first, then call.
+## Uses the interactable the player stands in (rests at a checkpoint) on `interact`.
+func try_interact() -> bool:
+	if not Input.is_action_just_pressed(&"interact"):
+		return false
+	var target: Interactable = player.find_interactable()
+	return target != null and target.interact(player)
+
+
+## Interact-style inputs available on foot: mount first, then call, then other interactables.
 func try_mount_actions() -> bool:
-	return try_mount() or try_call_mount()
+	return try_mount() or try_call_mount() or try_interact()
 
 
 ## Moves to Fall when the body has left the ground.

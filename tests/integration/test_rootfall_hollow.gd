@@ -3,7 +3,7 @@ extends GutTest
 
 const LEVEL: PackedScene = preload("res://levels/rootfall_hollow/rootfall_hollow.tscn")
 const CHECKPOINT: PackedScene = preload("res://levels/checkpoint/checkpoint.tscn")
-const PROBE: Script = preload("res://tests/support/refill_probe.gd")
+const PLAYER: PackedScene = preload("res://actors/player/player.tscn")
 
 var _level: Node3D = null
 
@@ -154,13 +154,10 @@ func test_checkpoint_rest_sets_respawn_refills_and_resets_world() -> void:
 	var checkpoint := CHECKPOINT.instantiate() as Checkpoint
 	add_child_autofree(checkpoint)
 	checkpoint.global_position = Vector3(12.0, 0.0, -40.0)
-	var actor := Node3D.new()
-	for component: String in ["HealthComponent", "StaminaComponent"]:
-		var probe := Node.new()
-		probe.name = component
-		probe.set_script(PROBE)
-		actor.add_child(probe)
+	var actor: Player = PLAYER.instantiate() as Player
 	add_child_autofree(actor)
+	actor.health.take_damage(60.0)
+	actor.stamina.try_spend(actor.stamina.current)
 	watch_signals(EventBus)
 	watch_signals(GameState)
 	var token_before: int = GameState.reset_token
@@ -173,8 +170,8 @@ func test_checkpoint_rest_sets_respawn_refills_and_resets_world() -> void:
 	assert_eq(GameState.reset_token, token_before + 1, "world reset requested")
 	assert_signal_emitted(EventBus, "checkpoint_rested")
 	assert_signal_emitted(GameState, "run_reset")
-	for component: String in ["HealthComponent", "StaminaComponent"]:
-		assert_eq(actor.get_node(component).refilled, 1, "%s refilled" % component)
+	assert_eq(actor.health.current, actor.health.max_health, "health refilled")
+	assert_eq(actor.stamina.current, actor.stamina.max_stamina, "stamina refilled")
 
 
 func test_resting_in_the_level_checkpoint_becomes_the_respawn_point() -> void:
@@ -185,24 +182,10 @@ func test_resting_in_the_level_checkpoint_becomes_the_respawn_point() -> void:
 	assert_eq(GameState.respawn_transform_for_player().origin, checkpoint.global_position)
 
 
-func _player_like_body() -> Node3D:
-	var body := Node3D.new()
-	var health := HealthComponent.new()
-	health.name = "Health"
-	body.add_child(health)
-	health.reset()
-	var poise := PoiseComponent.new()
-	poise.name = "Poise"
-	body.add_child(poise)
-	poise.reset()
-	add_child_autofree(body)
-	return body
-
-
 func test_fog_gate_announces_the_boss_once_until_reset() -> void:
 	var level: Node3D = await _load_level()
 	var gate: FogGate = level.get_node("FogGate") as FogGate
-	var body := _player_like_body()
+	var body: Player = level.get_node("Player") as Player
 	watch_signals(EventBus)
 	gate._on_body_entered(body)
 	gate._on_body_entered(body)

@@ -11,6 +11,9 @@ extends Area3D
 ## Emitted when an actor uses this object. `actor` is the node that interacted.
 signal interacted(actor: Node)
 
+## Physics layer bit of the named `interact` layer (layer 9).
+const LAYER: int = 1 << 8
+
 ## Short verb shown by the HUD prompt, e.g. "Rest".
 @export var prompt_text: String = "Interact"
 
@@ -20,7 +23,7 @@ signal interacted(actor: Node)
 
 func _ready() -> void:
 	# Named layer `interact` (bit 9); the interactable is only ever a target, never a scanner.
-	collision_layer = 1 << 8
+	collision_layer = LAYER
 	collision_mask = 0
 	monitoring = false
 

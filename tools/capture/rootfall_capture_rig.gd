@@ -6,8 +6,8 @@ extends Node3D
 ##   CamArenaWide  from the fog gate across the boss arena, sun beams in frame
 ##   CamHero       ground-level hero shot echoing the concept art: Grukk looming over the gnome
 ##
-## The level scene itself stays actor-free (gameplay cards own the actors); the stand-ins here are
-## the imported hero models in their neutral pose, only so captures show scale and rim light.
+## The level is instanced with `spawn_actors = false` (no gameplay actors); the stand-ins here
+## are the imported hero models in their neutral pose, only so captures show scale and rim light.
 
 const GNOME_AT := Vector3(-1.2, 0.0, -297.5)
 const GRUKK_AT := Vector3(3.0, 0.0, -308.0)

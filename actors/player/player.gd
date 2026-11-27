@@ -174,6 +174,27 @@ func update_facing(move_direction: Vector3, delta: float, allow_strafe: bool = t
 		face_direction(move_direction, delta)
 
 
+## Refills health, stamina and poise; used by checkpoint rests and respawns.
+func restore_vitals() -> void:
+	health.reset()
+	stamina.reset()
+	poise.reset()
+
+
+## The enabled [Interactable] (checkpoint, ...) whose area the player stands in, or null.
+func find_interactable() -> Interactable:
+	var query := PhysicsPointQueryParameters3D.new()
+	query.position = global_position + Vector3.UP * stats.lock_eye_height
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	query.collision_mask = Interactable.LAYER
+	for hit: Dictionary in get_world_3d().direct_space_state.intersect_point(query):
+		var interactable := hit.get("collider") as Interactable
+		if interactable != null and interactable.enabled:
+			return interactable
+	return null
+
+
 ## Puts the player in the Stagger state; called on poise break. A dead player stays dead.
 func stagger() -> void:
 	if health.is_dead():

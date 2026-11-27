@@ -8,6 +8,8 @@ extends RefCounted
 ## Where the Mushroom Ring checkpoint sits. The player starts beside it.
 const CHECKPOINT_POS := Vector3(0.0, 0.0, 0.0)
 const PLAYER_START_POS := Vector3(0.0, 0.0, 3.0)
+## Where the cat waits at the start: on the path centreline a short whistle away.
+const MOUNT_START_POS := Vector3(3.0, 0.0, -14.0)
 
 ## Centreline of the approach path, checkpoint to fog gate (x, z). About 330 m: roughly
 ## 60 s at a 5.5 m/s run and 95 s at a 3.5 m/s walk. The three wide waypoints (index 2, 5, 7)

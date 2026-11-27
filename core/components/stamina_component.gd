@@ -23,7 +23,7 @@ var _delay_left: float = 0.0
 var _winded_left: float = 0.0
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	tick(delta)
 
 
@@ -40,6 +40,14 @@ func apply_stats(stats: CharacterStats) -> void:
 
 
 ## True while the character is winded (actions are refused).
+## Refills to maximum and clears the regen delay and winded state (rest, respawn).
+func reset() -> void:
+	current = max_stamina
+	_delay_left = 0.0
+	_winded_left = 0.0
+	changed.emit(current, max_stamina)
+
+
 func is_winded() -> bool:
 	return _winded_left > 0.0
 

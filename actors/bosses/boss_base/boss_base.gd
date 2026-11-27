@@ -34,6 +34,8 @@ var _shockwave_timer: SceneTreeTimer = null
 @onready var state_machine: StateMachine = $StateMachine
 @onready var model: Node3D = $Model
 @onready var animation_player: AnimationPlayer = $Model/AnimationPlayer
+## Optional lock-on point; disabled while dead so the player's lock releases.
+@onready var lock_target: LockOnTarget = get_node_or_null("LockOnTarget") as LockOnTarget
 
 
 func _ready() -> void:
@@ -129,7 +131,9 @@ func _on_runner_phase_changed(phase: AttackRunner.Phase) -> void:
 	_close_shockwave()  # A previous slam's stray timer must never close this ring early.
 	shockwave.configure(followup, self)
 	shockwave.set_active(true)
-	_shockwave_timer = get_tree().create_timer(followup.active)
+	# Counted in physics ticks, like the hit windows, so the ring lasts the same game time
+	# whatever the render frame rate.
+	_shockwave_timer = get_tree().create_timer(followup.active, false, true)
 	_shockwave_timer.timeout.connect(_on_shockwave_timeout)
 
 
@@ -208,6 +212,8 @@ func _on_died() -> void:
 	defeated = true
 	runner.cancel()
 	_close_shockwave()
+	if lock_target != null:
+		lock_target.enabled = false
 	GameState.mark_won()
 	EventBus.boss_defeated.emit(self)
 	state_machine.transition_to(&"Dead")
@@ -223,6 +229,8 @@ func reset_boss() -> void:
 	current_move = null
 	speed_multiplier = 1.0
 	health.invulnerable = false
+	if lock_target != null:
+		lock_target.enabled = true
 	health.reset()
 	poise.reset()
 	brain.reset()

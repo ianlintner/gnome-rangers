@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://actors/bosses/orc_brute/grukk.gd" id="1_grukk"]
 [ext_resource type="CombatStats" path="res://actors/bosses/orc_brute/grukk_stats.tres" id="2_stats"]
@@ -24,6 +24,7 @@
 [ext_resource type="Script" path="res://actors/bosses/boss_base/states/phase_transition_state.gd" id="22_phase_transition"]
 [ext_resource type="Script" path="res://actors/bosses/boss_base/states/dead_state.gd" id="23_dead"]
 [ext_resource type="PackedScene" path="res://assets/characters/grukk_orc_brute/grukk_orc_brute.glb" id="24_model"]
+[ext_resource type="Script" path="res://core/components/lock_on_target.gd" id="25_lock"]
 
 [sub_resource type="CapsuleShape3D" id="body_shape"]
 radius = 1.3
@@ -214,3 +215,7 @@ duration = 1.4
 
 [node name="Dead" type="Node" parent="StateMachine"]
 script = ExtResource("23_dead")
+
+[node name="LockOnTarget" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+script = ExtResource("25_lock")
